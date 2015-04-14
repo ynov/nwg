@@ -1,8 +1,13 @@
-CXXFLAGS = -O2 -g -Wall -fmessage-length=0 -std=c++11
-LIBS = -levent
+CXXFLAGS=-O2 -g -Wall -fmessage-length=0 -std=c++11
+LIBS=-L./ -lnwg -levent
 
-all: \
-	nwg_objectcontainer.o \
+all: libnwg.a tests
+
+tests: 	tests/test_nwg_bytebuffer \
+	tests/test_nwg_server \
+	tests/test_echoserver
+
+libnwg.a: nwg_objectcontainer.o \
 	nwg_object.o \
 	nwg_bytebuffer.o \
 	nwg_session.o \
@@ -10,11 +15,7 @@ all: \
 	nwg_basicprotocolcodec.o \
 	nwg_handler.o \
 	nwg_server.o
-
-tests: \
-	tests/test_nwg_bytebuffer \
-	tests/test_nwg_server \
-	tests/test_echoserver
+	ar rcs libnwg.a *.o
 
 nwg_objectcontainer.o: nwg_objectcontainer.cc nwg_objectcontainer.h
 	g++ -c nwg_objectcontainer.cc $(CXXFLAGS)
@@ -40,60 +41,22 @@ nwg_handler.o: nwg_handler.cc nwg_handler.h
 nwg_server.o: nwg_server.cc nwg_server.h
 	g++ -c nwg_server.cc $(CXXFLAGS)
 
-tests/test_nwg_bytebuffer: \
-		tests/nwg_bytebuffer_test.cc \
-		nwg_object.o \
-		nwg_bytebuffer.o
+tests/test_nwg_bytebuffer: libnwg.a
 	g++ -I./ -o tests/test_nwg_bytebuffer \
 		tests/nwg_bytebuffer_test.cc \
-		nwg_object.o \
-		nwg_bytebuffer.o \
 		$(CXXFLAGS) $(LIBS)
 
-tests/test_nwg_server: \
-		tests/nwg_server_test.cc \
-		nwg_objectcontainer.o \
-		nwg_object.o \
-		nwg_bytebuffer.o \
-		nwg_session.o \
-		nwg_protocolcodec.o \
-		nwg_basicprotocolcodec.o \
-		nwg_handler.o \
-		nwg_server.o
+tests/test_nwg_server: libnwg.a
 	g++ -I./ -o tests/test_nwg_server \
 		tests/nwg_server_test.cc \
-		nwg_objectcontainer.o \
-		nwg_object.o \
-		nwg_bytebuffer.o \
-		nwg_session.o \
-		nwg_protocolcodec.o \
-		nwg_basicprotocolcodec.o \
-		nwg_handler.o \
-		nwg_server.o \
 		$(CXXFLAGS) $(LIBS)
 
-tests/test_echoserver: \
-		tests/echoserver.cc \
-		nwg_objectcontainer.o \
-		nwg_object.o \
-		nwg_bytebuffer.o \
-		nwg_session.o \
-		nwg_protocolcodec.o \
-		nwg_basicprotocolcodec.o \
-		nwg_handler.o \
-		nwg_server.o
+tests/test_echoserver: libnwg.a
 	g++ -I./ -o tests/test_echoserver \
 		tests/echoserver.cc \
-		nwg_objectcontainer.o \
-		nwg_object.o \
-		nwg_bytebuffer.o \
-		nwg_session.o \
-		nwg_protocolcodec.o \
-		nwg_basicprotocolcodec.o \
-		nwg_handler.o \
-		nwg_server.o \
 		$(CXXFLAGS) $(LIBS)
 
 clean:
 	rm -f tests/test_*
 	rm -f *.o
+	rm -f *.a
