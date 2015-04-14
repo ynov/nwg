@@ -51,6 +51,8 @@ public:
     float getFloat();
     double getDouble();
 
+    byte &operator[](int i);
+
 private:
     int _position;
     int _limit;

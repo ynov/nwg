@@ -123,4 +123,9 @@ double ByteBuffer::getDouble()
     return d;
 }
 
+byte &ByteBuffer::operator[](int i)
+{
+    return _bs[i];
+}
+
 } // namespace Nwg
