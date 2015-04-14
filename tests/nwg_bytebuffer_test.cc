@@ -9,6 +9,8 @@ int main(int argc, char **argv)
     Nwg::ByteBuffer b1(1024);
     Nwg::ByteBuffer b2(1024);
     Nwg::ByteBuffer b3(1024);
+    Nwg::ByteBuffer b4(1024);
+    Nwg::ByteBuffer b5(1024);
 
     Nwg::Object &obj = b3;
 
@@ -66,7 +68,20 @@ int main(int argc, char **argv)
 
         printf("bbuf.ssize() | 4 = %d\n", bbuf.ssize());
         printf("obj.ssize() | 4 = %d\n", obj.ssize());
+        printf("\n");
     } while(0);
+
+    b4.putString("The quick brown fox jumps over the lazy dog.");
+    b4.flip();
+
+    b5.putBytes(b4.getBytes(b4.remaining()));
+    b5.flip();
+
+    b4.putString(" + Extra!");
+    b4.flip();
+
+    printf("b4: %s\n", b4.getString(b4.remaining()).c_str());
+    printf("b5: %s\n", b5.getString(b5.remaining()).c_str());
 
     printf("\n-- END --\n");
     return 0;
