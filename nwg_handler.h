@@ -2,6 +2,7 @@
 #define NWG_HANDLER_H_
 
 #include "nwg_object.h"
+#include "nwg_session.h"
 
 namespace Nwg
 {
@@ -12,10 +13,10 @@ public:
     Handler();
     virtual ~Handler();
 
-    void sessionOpened(Session &session);
-    void sessionClosed(Session &session);
-    void messageReceived(Session &session, Object &message);
-    void messageSent(Session &session, Object &message);
+    virtual void sessionOpened(Session &session);
+    virtual void sessionClosed(Session &session);
+    virtual void messageReceived(Session &session, Object &message);
+    virtual void messageSent(Session &session, Object &message);
 };
 
 } /* namespace Nwg */

@@ -2,6 +2,8 @@
 #define NWG_PROTOCOLCODEC_H_
 
 #include "nwg_object.h"
+#include "nwg_objectcontainer.h"
+#include "nwg_bytebuffer.h"
 
 namespace Nwg
 {
@@ -12,8 +14,8 @@ public:
     ProtocolCodec();
     virtual ~ProtocolCodec();
 
-    void encode(ByteBuffer &in, ObjectContainer &out);
-    void decode(Object &in, ByteBuffer &out);
+    virtual void encode(ByteBuffer &in, ObjectContainer &out) const = 0;
+    virtual void decode(Object &in, ByteBuffer &out) const = 0;
 };
 
 } /* namespace Nwg */
