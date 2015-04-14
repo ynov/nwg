@@ -1,10 +1,3 @@
-/*
- * nwg_objectcontainer.cpp
- *
- *  Created on: Apr 14, 2015
- *      Author: inov
- */
-
 #include "nwg_objectcontainer.h"
 
 namespace Nwg
