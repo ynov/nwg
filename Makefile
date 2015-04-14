@@ -13,7 +13,8 @@ all: \
 
 tests: \
 	tests/test_nwg_bytebuffer \
-	tests/test_nwg_server
+	tests/test_nwg_server \
+	tests/test_echoserver
 
 nwg_objectcontainer.o: nwg_objectcontainer.cc nwg_objectcontainer.h
 	g++ -c nwg_objectcontainer.cc $(CXXFLAGS)
@@ -71,5 +72,28 @@ tests/test_nwg_server: \
 		nwg_server.o \
 		$(CXXFLAGS) $(LIBS)
 
+tests/test_echoserver: \
+		tests/echoserver.cc \
+		nwg_objectcontainer.o \
+		nwg_object.o \
+		nwg_bytebuffer.o \
+		nwg_session.o \
+		nwg_protocolcodec.o \
+		nwg_basicprotocolcodec.o \
+		nwg_handler.o \
+		nwg_server.o
+	g++ -I./ -o tests/test_echoserver \
+		tests/echoserver.cc \
+		nwg_objectcontainer.o \
+		nwg_object.o \
+		nwg_bytebuffer.o \
+		nwg_session.o \
+		nwg_protocolcodec.o \
+		nwg_basicprotocolcodec.o \
+		nwg_handler.o \
+		nwg_server.o \
+		$(CXXFLAGS) $(LIBS)
+
 clean:
+	rm -f tests/test_*
 	rm -f *.o

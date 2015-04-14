@@ -11,6 +11,12 @@ class DummyHandler : public Nwg::Handler
 
         Nwg::ByteBuffer &b = dynamic_cast<Nwg::ByteBuffer &>(message);
         printf("In Message: %s\n", b.getString(b.remaining()).c_str());
+
+        Nwg::ByteBuffer *out = new Nwg::ByteBuffer(session.bufferAllocationSize());
+        out->putString("Grumpy wizards make toxic brew for the evil queen and jack.");
+        out->flip();
+
+        session.write(out);
     }
 
     void messageSent(Nwg::Session &session, Nwg::Object &message)
@@ -22,12 +28,14 @@ class DummyHandler : public Nwg::Handler
     }
 };
 
-class BasicServer : public Nwg::Server
+class DummyServer : public Nwg::Server
 {
 public:
+    DummyServer() : Nwg::Server(8845) {}
+
     void wtf()
     {
-        Nwg::Session session(4096);
+        Nwg::Session session(4096, nullptr, 0, nullptr);
 
         Nwg::ByteBuffer &in = session.getReadBuffer();
         Nwg::ByteBuffer &out = session.getWriteBuffer();
@@ -40,12 +48,6 @@ public:
         protocolCodec()->encode(in, oc);
         handler()->messageReceived(session, *oc.object());
 
-        std::shared_ptr<Nwg::ByteBuffer> writeObject(new Nwg::ByteBuffer(4096));
-        writeObject->putString("Grumpy wizards make toxic brew for the evil queen and jack.");
-        writeObject->flip();
-
-        session.write(writeObject);
-
         protocolCodec()->decode(session.getWriteObject(), out);
         Nwg::ByteBuffer outCopy = out;
         printf(" >> %s\n", out.getString(out.remaining()).c_str());
@@ -53,10 +55,11 @@ public:
     }
 };
 
+
 void test_dummy()
 {
     printf("-- BEGIN test_dummy() --\n\n");
-    BasicServer server;
+    DummyServer server;
 
     std::shared_ptr<Nwg::ProtocolCodec> protocolCodec(new Nwg::BasicProtocolCodec());
     std::shared_ptr<Nwg::Handler> handler(new DummyHandler());
