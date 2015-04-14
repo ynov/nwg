@@ -8,4 +8,4 @@ Object::~Object() {}
 
 int Object::ssize() { return 0; }
 
-} // namespace Nwg
+} /* namespace Nwg */

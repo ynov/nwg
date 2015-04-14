@@ -1,10 +1,10 @@
-#include "nwg_object.h"
+#ifndef NWG_BYTEBUFFER_H_
+#define NWG_BYTEBUFFER_H_
 
 #include <vector>
 #include <string>
 
-#ifndef NWG_BYTEBUFFER_H_
-#define NWG_BYTEBUFFER_H_
+#include "nwg_object.h"
 
 typedef unsigned char byte;
 
@@ -59,6 +59,6 @@ private:
     std::vector<byte> _bs;
 };
 
-} // namespace Nwg
+} /* namespace Nwg */
 
-#endif
+#endif /* NWG_BYTEBUFFER_H_ */

@@ -14,6 +14,6 @@ public:
     virtual int ssize();
 };
 
-} // namespace Nwg
+} /* namespace Nwg */
 
-#endif
+#endif /* NWG_OBJECT_H_ */
