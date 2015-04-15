@@ -46,12 +46,10 @@ void Session::write(Object *obj)
 
 void Session::close()
 {
-    ::close(_fd);
-    _server->handler()->sessionClosed(*this);
-    closed = true;
+    _closed = true;
 }
 
-int Session::bufferAllocationSize()
+int Session::getBufferAllocationSize()
 {
     return _bufferAllocationSize;
 }
@@ -71,9 +69,19 @@ ByteBuffer &Session::getWriteBuffer()
     return _writeBuffer;
 }
 
-Server *Session::server()
+Server &Session::getServer()
 {
-    return _server;
+    return *_server;
+}
+
+bool Session::isClosed()
+{
+    return _closed;
+}
+
+int Session::getFd()
+{
+    return _fd;
 }
 
 } /* namespace Nwg */

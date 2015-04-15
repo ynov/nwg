@@ -20,6 +20,9 @@
 #include "nwg_handler.h"
 #include "nwg_protocolcodec.h"
 
+#define DEFAULT_BUFFSIZE 32768
+#define SMALL_BUFFSIZE 1024
+
 namespace Nwg
 {
 
@@ -30,14 +33,19 @@ public:
     virtual ~Server();
 
     std::map<std::string, std::shared_ptr<Object>> &globals();
-    void setProtocolCodec(std::shared_ptr<ProtocolCodec> _protocolCodec);
-    void setHandler(std::shared_ptr<Handler> _handler);
 
-    std::shared_ptr<Handler> handler();
-    std::shared_ptr<ProtocolCodec> protocolCodec();
+    void setProtocolCodec(ProtocolCodec *_protocolCodec);
+    void setHandler(Handler *_handler);
+
+    Handler &getHandler();
+    ProtocolCodec &getProtocolCodec();
 
     void setPort(int port);
-    int port();
+    void setBuffSize(int buffsize);
+
+    int getPort();
+    int getBuffSize();
+
     void run();
 
     static void evcb_doRead(evutil_socket_t fd, short events, void *arg);
@@ -48,12 +56,14 @@ private:
 
 private:
     std::map<std::string, std::shared_ptr<Object>> _globals;
+
     std::shared_ptr<ProtocolCodec> _protocolCodec;
     std::shared_ptr<Handler> _handler;
 
     int _port;
     evutil_socket_t _listener = -1;
     struct event *_listenerEvent = nullptr;
+    int _buffSize = DEFAULT_BUFFSIZE;
 };
 
 struct ListenerEventArg {

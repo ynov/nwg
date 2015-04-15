@@ -13,7 +13,7 @@ BasicProtocolCodec::~BasicProtocolCodec()
 
 void BasicProtocolCodec::encode(ByteBuffer &in, ObjectContainer &out) const
 {
-    std::shared_ptr<ByteBuffer> inCopy(new ByteBuffer(in.remaining()));
+    ByteBuffer *inCopy = new ByteBuffer(in.remaining());
     inCopy->putBytes(in.getBytes(in.remaining()));
     inCopy->flip();
     out.setObject(inCopy);

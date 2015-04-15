@@ -3,6 +3,8 @@
 #include "nwg_server.h"
 #include "nwg_basicprotocolcodec.h"
 
+#define BUFFSIZE 32768
+
 class EchoHandler : public Nwg::Handler
 {
     void sessionOpened(Nwg::Session &session)
@@ -19,10 +21,10 @@ class EchoHandler : public Nwg::Handler
     {
         Nwg::ByteBuffer &b = dynamic_cast<Nwg::ByteBuffer &>(message);
 
-        Nwg::ByteBuffer bCopy = b;
-        printf("\n >> %s\n", bCopy.getString(bCopy.remaining()).c_str());
+        printf("\n >> %s\n", b.getString(b.remaining()).c_str());
+        b.flip();
 
-        Nwg::ByteBuffer *out = new Nwg::ByteBuffer(session.bufferAllocationSize());
+        Nwg::ByteBuffer *out = new Nwg::ByteBuffer(session.getBufferAllocationSize());
         out->putBytes(b.getBytes(b.remaining()));
         out->flip();
 
@@ -31,7 +33,6 @@ class EchoHandler : public Nwg::Handler
 
     void messageSent(Nwg::Session &session, Nwg::Object &message)
     {
-        Nwg::ByteBuffer &b = dynamic_cast<Nwg::ByteBuffer &>(message);
         session.close();
     }
 };
@@ -40,14 +41,12 @@ class EchoHandler : public Nwg::Handler
 void run()
 {
     Nwg::Server server(8845);
+    server.setBuffSize(BUFFSIZE);
 
-    std::shared_ptr<Nwg::ProtocolCodec> protocolCodec(new Nwg::BasicProtocolCodec());
-    std::shared_ptr<Nwg::Handler> handler(new EchoHandler());
+    server.setProtocolCodec(new Nwg::BasicProtocolCodec());
+    server.setHandler(new EchoHandler());
 
-    server.setProtocolCodec(protocolCodec);
-    server.setHandler(handler);
-
-    printf("Listening on port %d\n", server.port());
+    printf("Listening on port %d\n", server.getPort());
     server.run();
 }
 

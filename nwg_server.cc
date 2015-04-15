@@ -10,6 +10,8 @@ Server::Server(int port)
 
 Server::~Server()
 {
+    _protocolCodec.reset();
+    _handler.reset();
 }
 
 std::map<std::string, std::shared_ptr<Object>> &Server::globals()
@@ -17,35 +19,44 @@ std::map<std::string, std::shared_ptr<Object>> &Server::globals()
     return _globals;
 }
 
-void Server::setProtocolCodec(std::shared_ptr<ProtocolCodec> protocolCodec)
+void Server::setProtocolCodec(ProtocolCodec *protocolCodec)
 {
-    _protocolCodec = protocolCodec;
+    _protocolCodec = std::shared_ptr<ProtocolCodec>(protocolCodec);
 }
 
-void Server::setHandler(std::shared_ptr<Handler> handler)
+void Server::setHandler(Handler *handler)
 {
-    _handler = handler;
+    _handler = std::shared_ptr<Handler>(handler);
 }
 
-std::shared_ptr<ProtocolCodec> Server::protocolCodec()
+ProtocolCodec &Server::getProtocolCodec()
 {
-    return _protocolCodec;
+    return *_protocolCodec;
 }
 
-
-std::shared_ptr<Handler> Server::handler()
+Handler &Server::getHandler()
 {
-    return _handler;
+    return *_handler;
 }
 
-int Server::port()
+int Server::getPort()
 {
     return _port;
+}
+
+int Server::getBuffSize()
+{
+    return _buffSize;
 }
 
 void Server::setPort(int port)
 {
     _port = port;
+}
+
+void Server::setBuffSize(int buffSize)
+{
+    _buffSize = buffSize;
 }
 
 void Server::evcb_doAccept(evutil_socket_t listener, short event, void *arg)
@@ -68,9 +79,9 @@ void Server::evcb_doAccept(evutil_socket_t listener, short event, void *arg)
         evutil_make_socket_nonblocking(fd);
 
         // std::shared_ptr<Session> session(new Session(4096, base, fd, server));
-        Session *session = new Session(4096, base, fd, server);
+        Session *session = new Session(server->getBuffSize(), base, fd, server);
 
-        server->handler()->sessionOpened(*session);
+        server->getHandler().sessionOpened(*session);
         event_add(session->readEvent, NULL);
     }
 }
@@ -78,9 +89,10 @@ void Server::evcb_doAccept(evutil_socket_t listener, short event, void *arg)
 void Server::evcb_doRead(evutil_socket_t fd, short events, void *arg)
 {
     printf("doRead()\n");
+
     Session *session = (Session *) arg;
 
-    char buf[1024];
+    char buf[SMALL_BUFFSIZE];
     ssize_t result;
 
     while (1) {
@@ -94,28 +106,36 @@ void Server::evcb_doRead(evutil_socket_t fd, short events, void *arg)
     session->getReadBuffer().flip();
     Nwg::ObjectContainer oc;
 
-    session->server()->protocolCodec()->encode(session->getReadBuffer(), oc);
-    session->server()->handler()->messageReceived(*session, *oc.object());
+    session->getServer().getProtocolCodec().encode(session->getReadBuffer(), oc);
+    session->getServer().getHandler().messageReceived(*session, oc.getObject());
+
+    if (session->isClosed()) {
+        close(fd);
+        session->getServer().getHandler().sessionClosed(*session);
+        delete session;
+        return;
+    }
 
     event_add(session->writeEvent, NULL);
-    // session->close();
-    // delete session;
 }
 
 void Server::evcb_doWrite(evutil_socket_t fd, short events, void *arg)
 {
     printf("doWrite()\n");
+
     Session *session = (Session *) arg;
 
-    session->server()->protocolCodec()->decode(session->getWriteObject(), session->getWriteBuffer());
+    session->getServer().getProtocolCodec().decode(session->getWriteObject(), session->getWriteBuffer());
     std::vector<byte> b =  session->getWriteBuffer().getBytes(session->getWriteBuffer().remaining());
     ssize_t result = send(fd, b.data(), b.size(), 0);
 
     event_del(session->writeEvent);
 
-    session->server()->handler()->messageSent(*session, session->getWriteObject());
+    session->getServer().getHandler().messageSent(*session, session->getWriteObject());
 
-    if (session->closed) {
+    if (session->isClosed()) {
+        close(fd);
+        session->getServer().getHandler().sessionClosed(*session);
         delete session;
     }
 }

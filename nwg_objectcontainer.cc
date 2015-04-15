@@ -13,14 +13,14 @@ ObjectContainer::~ObjectContainer()
     _obj.reset();
 }
 
-void ObjectContainer::setObject(std::shared_ptr<Object> obj)
+void ObjectContainer::setObject(Object *obj)
 {
-    _obj = obj;
+    _obj = std::shared_ptr<Object>(obj);
 }
 
-std::shared_ptr<Object> ObjectContainer::object()
+Object &ObjectContainer::getObject()
 {
-    return _obj;
+    return *_obj;
 }
 
 } /* namespace Nwg */

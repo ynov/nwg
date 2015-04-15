@@ -37,18 +37,18 @@ public:
     void write(Object *obj);
     void close();
 
-    int bufferAllocationSize();
+    int getBufferAllocationSize();
 
     Object &getWriteObject();
     ByteBuffer &getReadBuffer();
     ByteBuffer &getWriteBuffer();
+    Server &getServer();
 
-    Server *server();
+    bool isClosed();
+    int getFd();
 
     struct event *readEvent = nullptr;
     struct event *writeEvent = nullptr;
-
-    bool closed = false;
 
 private:
     int _bufferAllocationSize;
@@ -59,6 +59,8 @@ private:
 
     evutil_socket_t _fd = -1;
     Server *_server = nullptr;
+
+    bool _closed = false;
 };
 
 } /* namespace Nwg */

@@ -14,8 +14,8 @@ public:
     ObjectContainer();
     virtual ~ObjectContainer();
 
-    void setObject(std::shared_ptr<Object> obj);
-    std::shared_ptr<Object> object();
+    void setObject(Object *obj);
+    Object &getObject();
 
 private:
     std::shared_ptr<Object> _obj;

@@ -20,10 +20,10 @@ int ByteBuffer::ssize() { return _limit; }
 void ByteBuffer::forward(int n) { _position += n; }
 void ByteBuffer::rewind(int n) { _position -= n; }
 void ByteBuffer::jump(int n) { _position = n; }
+void ByteBuffer::flip() { _limit = _position; _position = 0; }
 int ByteBuffer::remaining() { return _limit - _position; }
 int ByteBuffer::position() { return _position; }
 int ByteBuffer::limit() { return _limit; }
-void ByteBuffer::flip() { _limit = _position; _position = 0; }
 
 void ByteBuffer::putByte(byte b)
 {
@@ -37,7 +37,7 @@ void ByteBuffer::putBytes(const byte *b, int size)
     _position += size;
 }
 
-void ByteBuffer::putBytes(const char *b, int size) { putBytes((const byte *) b, size); }
+void ByteBuffer::putBytes(const char *b, int size) { return putBytes((const byte *) b, size); }
 
 void ByteBuffer::putBytes(const std::vector<byte> &bs)
 {

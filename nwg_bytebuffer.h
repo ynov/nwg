@@ -22,10 +22,10 @@ public:
     void forward(int n);
     void rewind(int n);
     void jump(int n);
+    void flip();
     int remaining();
     int position();
     int limit();
-    void flip();
 
     void putByte(byte b);
     void putBytes(const char *b, int size);

@@ -3,6 +3,8 @@
 #include "nwg_server.h"
 #include "nwg_basicprotocolcodec.h"
 
+#define BUFFSIZE 4096
+
 class DummyHandler : public Nwg::Handler
 {
     void messageReceived(Nwg::Session &session, Nwg::Object &message)
@@ -12,7 +14,7 @@ class DummyHandler : public Nwg::Handler
         Nwg::ByteBuffer &b = dynamic_cast<Nwg::ByteBuffer &>(message);
         printf("In Message: %s\n", b.getString(b.remaining()).c_str());
 
-        Nwg::ByteBuffer *out = new Nwg::ByteBuffer(session.bufferAllocationSize());
+        Nwg::ByteBuffer *out = new Nwg::ByteBuffer(session.getBufferAllocationSize());
         out->putString("Grumpy wizards make toxic brew for the evil queen and jack.");
         out->flip();
 
@@ -35,7 +37,7 @@ public:
 
     void wtf()
     {
-        Nwg::Session session(4096, nullptr, 0, nullptr);
+        Nwg::Session session(BUFFSIZE, nullptr, 0, nullptr);
 
         Nwg::ByteBuffer &in = session.getReadBuffer();
         Nwg::ByteBuffer &out = session.getWriteBuffer();
@@ -45,27 +47,25 @@ public:
 
         Nwg::ObjectContainer oc;
 
-        protocolCodec()->encode(in, oc);
-        handler()->messageReceived(session, *oc.object());
+        getProtocolCodec().encode(in, oc);
+        getHandler().messageReceived(session, oc.getObject());
 
-        protocolCodec()->decode(session.getWriteObject(), out);
+        getProtocolCodec().decode(session.getWriteObject(), out);
         Nwg::ByteBuffer outCopy = out;
         printf(" >> %s\n", out.getString(out.remaining()).c_str());
-        handler()->messageSent(session, outCopy);
+        getHandler().messageSent(session, outCopy);
     }
 };
-
 
 void test_dummy()
 {
     printf("-- BEGIN test_dummy() --\n\n");
+
     DummyServer server;
+    server.setBuffSize(BUFFSIZE);
 
-    std::shared_ptr<Nwg::ProtocolCodec> protocolCodec(new Nwg::BasicProtocolCodec());
-    std::shared_ptr<Nwg::Handler> handler(new DummyHandler());
-
-    server.setProtocolCodec(protocolCodec);
-    server.setHandler(handler);
+    server.setProtocolCodec(new Nwg::BasicProtocolCodec());
+    server.setHandler(new DummyHandler());
 
     server.wtf();
 
