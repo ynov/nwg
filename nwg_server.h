@@ -26,6 +26,13 @@
 namespace Nwg
 {
 
+struct EVCB
+{
+    static void doAccept(evutil_socket_t listener, short event, void *arg);
+    static void doRead(evutil_socket_t fd, short events, void *arg);
+    static void doWrite(evutil_socket_t fd, short events, void *arg);
+};
+
 class Server : public Object
 {
 public:
@@ -47,12 +54,6 @@ public:
     int getBuffSize();
 
     void run();
-
-    static void evcb_doRead(evutil_socket_t fd, short events, void *arg);
-    static void evcb_doWrite(evutil_socket_t fd, short events, void *arg);
-
-private:
-    static void evcb_doAccept(evutil_socket_t listener, short event, void *arg);
 
 private:
     std::map<std::string, std::shared_ptr<Object>> _globals;

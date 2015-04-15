@@ -3,6 +3,102 @@
 namespace Nwg
 {
 
+void EVCB::doAccept(evutil_socket_t listener, short event, void *arg)
+{
+    // printf("doAccept()\n");
+
+    ListenerEventArg *listenerEventArg = (ListenerEventArg *) arg;
+
+    struct event_base *base = listenerEventArg->base;
+    Server &server = *listenerEventArg->server;
+
+    struct sockaddr_storage ss;
+    socklen_t slen = sizeof(ss);
+
+    int fd = accept(listener, (struct sockaddr *) &ss, &slen);
+    if (fd < 0) {
+        perror("accept()");
+    } else if (fd > FD_SETSIZE) {
+        close(fd);
+    } else {
+        evutil_make_socket_nonblocking(fd);
+
+        Session *session = new Session(server.getBuffSize(), base, fd, &server);
+
+        server.getHandler().sessionOpened(*session);
+
+        event_add(session->readEvent, NULL);
+    }
+}
+
+void EVCB::doRead(evutil_socket_t fd, short events, void *arg)
+{
+    // printf("doRead()\n");
+
+    Session &session = *((Session *) arg);
+    Server &server = session.getServer();
+    ProtocolCodec &protocolCodec = server.getProtocolCodec();
+    Handler &handler = server.getHandler();
+    ByteBuffer &readBuffer = session.getReadBuffer();
+
+    char buf[SMALL_BUFFSIZE];
+    ssize_t result;
+
+    while (1) {
+        result = recv(fd, buf, sizeof(buf), 0);
+        if (result <= 0)
+            break;
+
+        readBuffer.putBytes(buf, result);
+    }
+
+    readBuffer.flip();
+
+    Nwg::ObjectContainer oc;
+    protocolCodec.encode(session.getReadBuffer(), oc);
+
+    handler.messageReceived(session, oc.getObject());
+
+    if (session.isClosed()) {
+        close(fd);
+        handler.sessionClosed(session);
+        delete &session;
+
+        return;
+    }
+
+    event_add(session.writeEvent, NULL);
+}
+
+void EVCB::doWrite(evutil_socket_t fd, short events, void *arg)
+{
+    // printf("doWrite()\n");
+
+    Session &session = *((Session *) arg);
+    Server &server = session.getServer();
+    ProtocolCodec &protocolCodec = server.getProtocolCodec();
+    Handler &handler = server.getHandler();
+    ByteBuffer &writeBuffer = session.getWriteBuffer();
+
+    protocolCodec.decode(session.getWriteObject(), writeBuffer);
+
+    std::vector<byte> b =  writeBuffer.getBytes(writeBuffer.remaining());
+    ssize_t result = send(fd, b.data(), b.size(), 0);
+
+    event_del(session.writeEvent);
+
+    handler.messageSent(session, session.getWriteObject());
+
+    if (session.isClosed()) {
+        close(fd);
+        handler.sessionClosed(session);
+        delete &session;
+
+        return;
+    }
+}
+
+
 Server::Server(int port)
     : _protocolCodec(nullptr), _handler(nullptr), _port(port)
 {
@@ -59,87 +155,6 @@ void Server::setBuffSize(int buffSize)
     _buffSize = buffSize;
 }
 
-void Server::evcb_doAccept(evutil_socket_t listener, short event, void *arg)
-{
-    printf("doAccept()\n");
-
-    ListenerEventArg *listenerEventArg = (ListenerEventArg *) arg;
-    struct event_base *base = listenerEventArg->base;
-    Server *server = listenerEventArg->server;
-
-    struct sockaddr_storage ss;
-    socklen_t slen = sizeof(ss);
-
-    int fd = accept(listener, (struct sockaddr *) &ss, &slen);
-    if (fd < 0) {
-        perror("accept()");
-    } else if (fd > FD_SETSIZE) {
-        close(fd);
-    } else {
-        evutil_make_socket_nonblocking(fd);
-
-        // std::shared_ptr<Session> session(new Session(4096, base, fd, server));
-        Session *session = new Session(server->getBuffSize(), base, fd, server);
-
-        server->getHandler().sessionOpened(*session);
-        event_add(session->readEvent, NULL);
-    }
-}
-
-void Server::evcb_doRead(evutil_socket_t fd, short events, void *arg)
-{
-    printf("doRead()\n");
-
-    Session *session = (Session *) arg;
-
-    char buf[SMALL_BUFFSIZE];
-    ssize_t result;
-
-    while (1) {
-        result = recv(fd, buf, sizeof(buf), 0);
-        if (result <= 0)
-            break;
-
-        session->getReadBuffer().putBytes(buf, result);
-    }
-
-    session->getReadBuffer().flip();
-    Nwg::ObjectContainer oc;
-
-    session->getServer().getProtocolCodec().encode(session->getReadBuffer(), oc);
-    session->getServer().getHandler().messageReceived(*session, oc.getObject());
-
-    if (session->isClosed()) {
-        close(fd);
-        session->getServer().getHandler().sessionClosed(*session);
-        delete session;
-        return;
-    }
-
-    event_add(session->writeEvent, NULL);
-}
-
-void Server::evcb_doWrite(evutil_socket_t fd, short events, void *arg)
-{
-    printf("doWrite()\n");
-
-    Session *session = (Session *) arg;
-
-    session->getServer().getProtocolCodec().decode(session->getWriteObject(), session->getWriteBuffer());
-    std::vector<byte> b =  session->getWriteBuffer().getBytes(session->getWriteBuffer().remaining());
-    ssize_t result = send(fd, b.data(), b.size(), 0);
-
-    event_del(session->writeEvent);
-
-    session->getServer().getHandler().messageSent(*session, session->getWriteObject());
-
-    if (session->isClosed()) {
-        close(fd);
-        session->getServer().getHandler().sessionClosed(*session);
-        delete session;
-    }
-}
-
 void Server::run()
 {
     struct sockaddr_in sin;
@@ -176,8 +191,10 @@ void Server::run()
     listenerEventArg.base = base;
     listenerEventArg.server = this;
 
-    _listenerEvent = event_new(base, _listener, EV_READ | EV_PERSIST,
-        evcb_doAccept, (void *) &listenerEventArg);
+    _listenerEvent = event_new(base, _listener,
+            EV_READ | EV_PERSIST,
+            EVCB::doAccept,
+            (void *) &listenerEventArg);
 
     event_add(_listenerEvent, NULL);
 

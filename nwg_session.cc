@@ -16,14 +16,18 @@ Session::Session(int bufferAllocationSize,
       _fd(fd),
       _server(server)
 {
-    if (base == NULL) {
+    if (base == nullptr) {
         return;
     }
 
-    readEvent = event_new(base, _fd, EV_READ | EV_PERSIST,
-            Server::evcb_doRead, (void *) this);
-    writeEvent = event_new(base, _fd, EV_WRITE | EV_PERSIST,
-            Server::evcb_doWrite, (void *) this);
+    readEvent = event_new(base, _fd,
+            EV_READ | EV_PERSIST,
+            EVCB::doRead,
+            (void *) this);
+    writeEvent = event_new(base, _fd,
+            EV_WRITE | EV_PERSIST,
+            EVCB::doWrite,
+            (void *) this);
 }
 
 Session::~Session()
