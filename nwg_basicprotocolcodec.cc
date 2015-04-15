@@ -13,20 +13,21 @@ BasicProtocolCodec::~BasicProtocolCodec()
 
 void BasicProtocolCodec::encode(ByteBuffer &in, ObjectContainer &out) const
 {
-    ByteBuffer *inCopy = new ByteBuffer(in.remaining());
-    inCopy->putBytes(in.getBytes(in.remaining()));
-    inCopy->flip();
-    out.setObject(inCopy);
+    ByteBuffer *encoded = new ByteBuffer(in.ssize());
+    *encoded = in;
+    out.setObject(encoded);
 }
 
 void BasicProtocolCodec::decode(Object &in, ByteBuffer &out) const
 {
-    if (&in == nullptr) {
+    ByteBuffer *decoded = dynamic_cast<ByteBuffer *>(&in);
+
+    if (decoded == nullptr) {
         return;
     }
 
-    ByteBuffer &b = dynamic_cast<ByteBuffer &>(in);
-    out.putBytes(b.getBytes(b.remaining()));
+    out.reset();
+    out.putBytes(decoded->getBytes(decoded->remaining()));
     out.flip();
 }
 

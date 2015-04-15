@@ -11,6 +11,7 @@ void EVCB::doAccept(evutil_socket_t listener, short event, void *arg)
 
     struct event_base *base = listenerEventArg->base;
     Server &server = *listenerEventArg->server;
+    Handler &handler = server.getHandler();
 
     struct sockaddr_storage ss;
     socklen_t slen = sizeof(ss);
@@ -24,10 +25,15 @@ void EVCB::doAccept(evutil_socket_t listener, short event, void *arg)
         evutil_make_socket_nonblocking(fd);
 
         Session *session = new Session(server.getBuffSize(), base, fd, &server);
+        session->resetWrite();
 
-        server.getHandler().sessionOpened(*session);
+        handler.sessionOpened(*session);
 
-        event_add(session->readEvent, NULL);
+        if (session->isWriteObjectPresent()) {
+            event_add(session->writeEvent, NULL);
+        } else {
+            event_add(session->readEvent, NULL);
+        }
     }
 }
 
@@ -40,6 +46,7 @@ void EVCB::doRead(evutil_socket_t fd, short events, void *arg)
     ProtocolCodec &protocolCodec = server.getProtocolCodec();
     Handler &handler = server.getHandler();
     ByteBuffer &readBuffer = session.getReadBuffer();
+    ByteBuffer &writeBuffer = session.getWriteBuffer();
 
     char buf[SMALL_BUFFSIZE];
     ssize_t result;
@@ -51,15 +58,17 @@ void EVCB::doRead(evutil_socket_t fd, short events, void *arg)
 
         readBuffer.putBytes(buf, result);
     }
-
     readBuffer.flip();
 
     Nwg::ObjectContainer oc;
     protocolCodec.encode(session.getReadBuffer(), oc);
 
+    session.resetWrite();
     handler.messageReceived(session, oc.getObject());
 
     if (session.isClosed()) {
+        event_del(session.readEvent);
+
         close(fd);
         handler.sessionClosed(session);
         delete &session;
@@ -67,7 +76,9 @@ void EVCB::doRead(evutil_socket_t fd, short events, void *arg)
         return;
     }
 
-    event_add(session.writeEvent, NULL);
+    if (session.isWriteObjectPresent()) {
+        event_add(session.writeEvent, NULL);
+    }
 }
 
 void EVCB::doWrite(evutil_socket_t fd, short events, void *arg)
@@ -85,16 +96,27 @@ void EVCB::doWrite(evutil_socket_t fd, short events, void *arg)
     std::vector<byte> b = writeBuffer.getBytes(writeBuffer.remaining());
     ssize_t result = send(fd, b.data(), b.size(), 0);
 
-    event_del(session.writeEvent);
+    if (result < 0) {
+        // TODO
+    }
 
+    session.resetWrite();
     handler.messageSent(session, session.getWriteObject());
 
     if (session.isClosed()) {
+        event_del(session.writeEvent);
+
         close(fd);
         handler.sessionClosed(session);
         delete &session;
 
         return;
+    }
+
+    if (!session.isWriteObjectPresent()) {
+        event_del(session.writeEvent);
+    } else {
+        event_add(session.readEvent, NULL);
     }
 }
 

@@ -22,6 +22,7 @@ public:
     void forward(int n);
     void rewind(int n);
     void jump(int n);
+    void reset();
     void flip();
     int remaining();
     int position();

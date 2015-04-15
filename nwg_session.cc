@@ -38,11 +38,6 @@ Session::~Session()
         event_free(writeEvent);
 }
 
-void Session::write(std::shared_ptr<Object> obj)
-{
-    _writeObject = obj;
-}
-
 void Session::write(Object *obj)
 {
     _writeObject = std::shared_ptr<Object>(obj);
@@ -56,6 +51,25 @@ void Session::close()
 int Session::getBufferAllocationSize()
 {
     return _bufferAllocationSize;
+}
+
+bool Session::isWriteObjectPresent()
+{
+    return _writeObject.get() != nullptr;
+}
+
+void Session::resetWriteObject()
+{
+    if (_writeObject.get() != nullptr) {
+        _writeObject.reset();
+        _writeObject = nullptr;
+    }
+}
+
+void Session::resetWrite()
+{
+    resetWriteObject();
+    _writeBuffer.reset();
 }
 
 Object &Session::getWriteObject()

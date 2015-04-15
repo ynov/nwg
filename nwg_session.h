@@ -39,6 +39,10 @@ public:
 
     int getBufferAllocationSize();
 
+    bool isWriteObjectPresent();
+    void resetWriteObject();
+    void resetWrite();
+
     Object &getWriteObject();
     ByteBuffer &getReadBuffer();
     ByteBuffer &getWriteBuffer();
