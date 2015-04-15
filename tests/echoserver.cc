@@ -10,6 +10,12 @@ class EchoHandler : public Nwg::Handler
     void sessionOpened(Nwg::Session &session)
     {
         printf("One client connected!\n");
+
+        Nwg::ByteBuffer *out = new Nwg::ByteBuffer(BUFFSIZE);
+        out->putString("Just type anything. ^] To exit from telnet.\n");
+        out->flip();
+
+        session.write(out);
     }
 
     void sessionClosed(Nwg::Session &session)
@@ -24,7 +30,7 @@ class EchoHandler : public Nwg::Handler
         printf("\n >> %s\n", b.getString(b.remaining()).c_str());
         b.flip();
 
-        Nwg::ByteBuffer *out = new Nwg::ByteBuffer(session.getBufferAllocationSize());
+        Nwg::ByteBuffer *out = new Nwg::ByteBuffer(BUFFSIZE);
         out->putBytes(b.getBytes(b.remaining()));
         out->flip();
 
@@ -33,7 +39,7 @@ class EchoHandler : public Nwg::Handler
 
     void messageSent(Nwg::Session &session, Nwg::Object &message)
     {
-        session.close();
+        // session.close();
     }
 };
 

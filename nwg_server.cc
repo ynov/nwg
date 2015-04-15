@@ -60,6 +60,22 @@ void EVCB::doRead(evutil_socket_t fd, short events, void *arg)
     }
     readBuffer.flip();
 
+    if (result == 0) {
+        handler.sessionClosed(session);
+        delete &session;
+
+        return;
+    } else if (result < 0) {
+        if (errno != EAGAIN) {
+            handler.sessionClosed(session);
+            delete &session;
+
+            perror("recv()");
+
+            return;
+        }
+    }
+
     Nwg::ObjectContainer oc;
     protocolCodec.encode(session.getReadBuffer(), oc);
 
@@ -115,7 +131,6 @@ void EVCB::doWrite(evutil_socket_t fd, short events, void *arg)
 
     if (!session.isWriteObjectPresent()) {
         event_del(session.writeEvent);
-    } else {
         event_add(session.readEvent, NULL);
     }
 }
