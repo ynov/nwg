@@ -18,11 +18,13 @@ class EchoHandler : public Nwg::Handler
 
         session.put<int>("i", std::make_shared<int>(1));
 
+#if 1
         Nwg::ByteBuffer *out = new Nwg::ByteBuffer(BUFFSIZE);
         out->putString("Just type anything. Send key ^] to exit from telnet.\n");
         out->flip();
 
         session.write(out);
+#endif
     }
 
     void sessionClosed(Nwg::Session &session)
