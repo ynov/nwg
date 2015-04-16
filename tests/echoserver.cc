@@ -16,17 +16,20 @@ class EchoHandler : public Nwg::Handler
     {
         printf("One client connected!\n");
 
+        session.put<int>("i", std::make_shared<int>(1));
+
         Nwg::ByteBuffer *out = new Nwg::ByteBuffer(BUFFSIZE);
         out->putString("Just type anything. Send key ^] to exit from telnet.\n");
         out->flip();
 
-        session.put<int>("i", std::make_shared<int>(1));
         session.write(out);
     }
 
     void sessionClosed(Nwg::Session &session)
     {
-        printf("One client disconnected!\n");
+        int &i = session.get<int>("i");
+
+        printf("One client disconnected! # of message sent: %d\n", --i);
     }
 
     void messageReceived(Nwg::Session &session, Nwg::Object &message)
