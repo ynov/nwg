@@ -36,6 +36,10 @@ Session::~Session()
         event_free(readEvent);
     if (writeEvent != nullptr)
         event_free(writeEvent);
+
+    for (auto &_ : _vars) {
+        _.second.reset();
+    }
 }
 
 void Session::write(Object *obj)

@@ -1,6 +1,7 @@
 #ifndef NWG_SESSION_H_
 #define NWG_SESSION_H_
 
+#include <map>
 #include <memory>
 
 #include <netinet/in.h>
@@ -54,6 +55,24 @@ public:
     struct event *readEvent = nullptr;
     struct event *writeEvent = nullptr;
 
+    template<class T>
+    void put(const std::string &key, std::shared_ptr<T> val)
+    {
+        _vars[key] = val;
+    }
+
+    template<class T>
+    void put(const std::string &key, T *val)
+    {
+        _vars[key] = std::shared_ptr<T>(val);
+    }
+
+    template<class T>
+    T &get(const std::string &key)
+    {
+        return *(T *) _vars[key].get();
+    }
+
 private:
     int _bufferAllocationSize;
     std::shared_ptr<Object> _writeObject;
@@ -65,6 +84,7 @@ private:
     Server *_server = nullptr;
 
     bool _closed = false;
+    std::map<std::string, std::shared_ptr<void>> _vars;
 };
 
 } /* namespace Nwg */
