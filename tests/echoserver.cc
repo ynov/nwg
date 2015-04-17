@@ -54,12 +54,12 @@ class EchoHandler : public Nwg::Handler
         const int client_id = session.get<int>("client_id");
         int &msg_received = session.get<int>("msg_received");
 
-        printf("client #%d >> %s\n", client_id, msg.getString(msg.remaining()).c_str());
-        msg.flip();
+        printf("client #%d >> %s\n", client_id, msg.sreadUntil('\n').c_str());
+        msg.jump(0);
 
         Nwg::ByteBuffer &out = *new Nwg::ByteBuffer(BUFFSIZE);
         out.putString(std::to_string(msg_received) + ". >> ");
-        out.putBytes(msg.getBytes(msg.remaining()));
+        out.putBytes(msg.read(msg.remaining()));
         out.putString("\n" + std::to_string(msg_received + 1) + ". << ");
         out.flip();
 
