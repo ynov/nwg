@@ -5,11 +5,6 @@
 
 #define BUFFSIZE 32768
 
-template<class T>
-T &get(std::shared_ptr<void> p) {
-    return *(T *) p.get();
-}
-
 class EchoHandler : public Nwg::Handler
 {
     void sessionOpened(Nwg::Session &session)
