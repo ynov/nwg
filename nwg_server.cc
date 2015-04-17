@@ -7,10 +7,10 @@ void EVCB::doAccept(evutil_socket_t listener, short event, void *arg)
 {
     // printf("doAccept()\n");
 
-    ListenerEventArg *listenerEventArg = (ListenerEventArg *) arg;
+    ListenerEventArg &listenerEventArg = *(ListenerEventArg *) arg;
 
-    struct event_base *base = listenerEventArg->base;
-    Server &server = *listenerEventArg->server;
+    struct event_base *base = listenerEventArg.base;
+    Server &server = *listenerEventArg.server;
     Handler &handler = server.getHandler();
 
     struct sockaddr_storage ss;
@@ -24,15 +24,15 @@ void EVCB::doAccept(evutil_socket_t listener, short event, void *arg)
     } else {
         evutil_make_socket_nonblocking(fd);
 
-        Session *session = new Session(server.getBuffSize(), base, fd, &server);
-        session->resetWrite();
+        Session &session = *new Session(server.getBuffSize(), base, fd, &server);
+        session.resetWrite();
 
-        handler.sessionOpened(*session);
+        handler.sessionOpened(session);
 
-        if (session->isWriteObjectPresent()) {
-            event_add(session->writeEvent, NULL);
+        if (session.isWriteObjectPresent()) {
+            event_add(session.writeEvent, NULL);
         } else {
-            event_add(session->readEvent, NULL);
+            event_add(session.readEvent, NULL);
         }
     }
 }

@@ -34,7 +34,6 @@ public:
             Server *server);
     virtual ~Session();
 
-    void write(std::shared_ptr<Object> obj);
     void write(Object *obj);
     void close();
 

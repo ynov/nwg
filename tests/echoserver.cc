@@ -14,24 +14,22 @@ class EchoHandler : public Nwg::Handler
 {
     void sessionOpened(Nwg::Session &session)
     {
-        printf("One client connected!\n");
+        printf("one client connected!\n");
 
         session.put<int>("i", std::make_shared<int>(1));
 
-#if 1
-        Nwg::ByteBuffer *out = new Nwg::ByteBuffer(BUFFSIZE);
-        out->putString("Just type anything. Send key ^] to exit from telnet.\n");
-        out->flip();
+        Nwg::ByteBuffer &out = *new Nwg::ByteBuffer(BUFFSIZE);
+        out.putString("Just type anything. Send key ^] to exit from telnet.\n");
+        out.putString("1. << ");
+        out.flip();
 
-        session.write(out);
-#endif
+        session.write(&out);
     }
 
     void sessionClosed(Nwg::Session &session)
     {
         int &i = session.get<int>("i");
-
-        printf("One client disconnected! # of message sent: %d\n", --i);
+        printf("one client disconnected! # of message sent: %d\n", --i);
     }
 
     void messageReceived(Nwg::Session &session, Nwg::Object &message)
@@ -43,19 +41,20 @@ class EchoHandler : public Nwg::Handler
         printf("\n >> %s\n", b.getString(b.remaining()).c_str());
         b.flip();
 
-        Nwg::ByteBuffer *out = new Nwg::ByteBuffer(BUFFSIZE);
-        out->putString(std::to_string(i) + " >> ");
-        out->putBytes(b.getBytes(b.remaining()));
-        out->flip();
+        Nwg::ByteBuffer &out = *new Nwg::ByteBuffer(BUFFSIZE);
+        out.putString(std::to_string(i) + ". >> ");
+        out.putBytes(b.getBytes(b.remaining()));
+        out.putString("\n" + std::to_string(i + 1) + ". << ");
+        out.flip();
+
+        session.write(&out);
 
         i++;
-
-        session.write(out);
     }
 
     void messageSent(Nwg::Session &session, Nwg::Object &message)
     {
-        // session.close();
+
     }
 };
 
