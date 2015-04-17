@@ -29,6 +29,14 @@ void EVCB::doAccept(evutil_socket_t listener, short event, void *arg)
 
         handler.sessionOpened(session);
 
+        if (session.isClosed()) {
+            close(fd);
+            handler.sessionClosed(session);
+            delete &session;
+
+            return;
+        }
+
         if (session.isWriteObjectPresent()) {
             event_add(session.writeEvent, NULL);
         } else {
@@ -145,11 +153,6 @@ Server::~Server()
 {
     _protocolCodec.reset();
     _handler.reset();
-}
-
-std::map<std::string, std::shared_ptr<Object>> &Server::globals()
-{
-    return _globals;
 }
 
 void Server::setProtocolCodec(ProtocolCodec *protocolCodec)
