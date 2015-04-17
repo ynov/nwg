@@ -45,6 +45,7 @@ public:
 
     void read(byte *b, int size);
     std::vector<byte> read(int size);
+    std::vector<byte> readUntil(byte mark);
 
     std::string getString(int length);
 

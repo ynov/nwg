@@ -11,6 +11,7 @@ int main(int argc, char **argv)
     Nwg::ByteBuffer b3(1024);
     Nwg::ByteBuffer b4(1024);
     Nwg::ByteBuffer b5(1024);
+    Nwg::ByteBuffer b6(1024);
 
     Nwg::Object &obj = b3;
 
@@ -82,6 +83,21 @@ int main(int argc, char **argv)
 
     printf("b4: %s\n", b4.getString(b4.remaining()).c_str());
     printf("b5: %s\n", b5.getString(b5.remaining()).c_str());
+
+    b6.putString("Hello, world!\nThe quick brown fox jumps over the lazy dog\nNo newline, no newline...");
+    b6.flip();
+
+    std::vector<byte> a = b6.readUntil('\n');
+    std::vector<byte> b = b6.readUntil('\n');
+    std::vector<byte> c = b6.readUntil('\n');
+    a.push_back('\0');
+    b.push_back('\0');
+    c.push_back('\0');
+
+    printf("\n-- readUntil() --\n");
+    printf("a = %s\n", a.data());
+    printf("b = %s\n", b.data());
+    printf("c = %s\n", c.data());
 
     printf("\n-- END --\n");
     return 0;
