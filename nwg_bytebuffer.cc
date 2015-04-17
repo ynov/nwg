@@ -26,62 +26,66 @@ int ByteBuffer::remaining() { return _limit - _position; }
 int ByteBuffer::position() { return _position; }
 int ByteBuffer::limit() { return _limit; }
 
-void ByteBuffer::putByte(byte b)
+void ByteBuffer::put(byte b)
 {
     _bs.insert(_bs.begin() + _position, b);
     _position++;
 }
 
-void ByteBuffer::putBytes(const byte *b, int size)
+void ByteBuffer::put(const char *b, int size)
 {
     _bs.insert(_bs.begin() + _position, b, b + size);
     _position += size;
 }
 
-void ByteBuffer::putBytes(const char *b, int size) { return putBytes((const byte *) b, size); }
+void ByteBuffer::put(const byte *b, int size)
+{
+    _bs.insert(_bs.begin() + _position, b, b + size);
+    _position += size;
+}
 
-void ByteBuffer::putBytes(const std::vector<byte> &bs)
+void ByteBuffer::put(const std::vector<byte> &bs)
 {
     _bs.insert(_bs.begin() + _position, bs.begin(), bs.end());
     _position += bs.size();
 }
 
-void ByteBuffer::putString(const std::string &s)
+void ByteBuffer::put(const std::string &s)
 {
     _bs.insert(_bs.begin() + _position, s.begin(), s.end());
     _position += s.length();
 }
 
-void ByteBuffer::putInt(int i)
+void ByteBuffer::put(int i)
 {
     _bs.insert(_bs.begin() + _position, (byte *) &i, ((byte *) &i) + sizeof(int));
     _position += sizeof(int);
 }
 
-void ByteBuffer::putFloat(float f)
+void ByteBuffer::put(float f)
 {
     _bs.insert(_bs.begin() + _position, (byte *) &f, ((byte *) &f) + sizeof(float));
     _position += sizeof(float);
 }
 
-void ByteBuffer::putDouble(double d)
+void ByteBuffer::put(double d)
 {
     _bs.insert(_bs.begin() + _position, (byte *) &d, ((byte *) &d) + sizeof(double));
     _position += sizeof(double);
 }
 
-byte ByteBuffer::getByte()
+byte ByteBuffer::read()
 {
     return _bs[_position++];
 }
 
-void ByteBuffer::getBytes(byte *dest, int size)
+void ByteBuffer::read(byte *dest, int size)
 {
     memcpy(dest, _bs.data() + _position, size);
     _position += size;
 }
 
-std::vector<byte> ByteBuffer::getBytes(int size)
+std::vector<byte> ByteBuffer::read(int size)
 {
     std::vector<byte> bs(_bs.begin() + _position, _bs.begin() + _position + size);
     _position += size;
@@ -89,39 +93,21 @@ std::vector<byte> ByteBuffer::getBytes(int size)
     return bs;
 }
 
-void ByteBuffer::read(byte *dest, int size) { getBytes(dest, size); }
-std::vector<byte> ByteBuffer::read(int size) { return getBytes(size); }
-std::string ByteBuffer::sread(int length) { return getString(length); }
-
 std::vector<byte> ByteBuffer::readUntil(byte mark)
 {
     std::vector<byte> bs;
     bs.reserve(4096);
 
-    byte b = getByte();
+    byte b = read();
     while (b != mark && _position < _limit) {
         bs.push_back(b);
-        b = getByte();
+        b = read();
     }
 
     return bs;
 }
 
-std::string ByteBuffer::sreadUntil(byte mark)
-{
-    std::string s;
-    s.reserve(4096);
-
-    byte b = getByte();
-    while (b != mark && _position < _limit) {
-        s.push_back(b);
-        b = getByte();
-    }
-
-    return s;
-}
-
-std::string ByteBuffer::getString(int length)
+std::string ByteBuffer::sread(int length)
 {
     std::string s(_bs.begin() + _position, _bs.begin() + _position + length);
     _position += length;
@@ -129,7 +115,21 @@ std::string ByteBuffer::getString(int length)
     return s;
 }
 
-int ByteBuffer::getInt()
+std::string ByteBuffer::sreadUntil(byte mark)
+{
+    std::string s;
+    s.reserve(4096);
+
+    byte b = read();
+    while (b != mark && _position < _limit) {
+        s.push_back(b);
+        b = read();
+    }
+
+    return s;
+}
+
+int ByteBuffer::readInt()
 {
     int i =  *((int *) &(_bs[_position]));
     _position += sizeof(int);
@@ -137,7 +137,7 @@ int ByteBuffer::getInt()
     return i;
 }
 
-float ByteBuffer::getFloat()
+float ByteBuffer::readFloat()
 {
     float f =  *((float *) &(_bs[_position]));
     _position += sizeof(float);
@@ -145,7 +145,7 @@ float ByteBuffer::getFloat()
     return f;
 }
 
-double ByteBuffer::getDouble()
+double ByteBuffer::readDouble()
 {
     double d =  *((double *) &(_bs[_position]));
     _position += sizeof(double);

@@ -28,32 +28,26 @@ public:
     int position();
     int limit();
 
-    void putByte(byte b);
-    void putBytes(const char *b, int size);
-    void putBytes(const byte *b, int size);
-    void putBytes(const std::vector<byte> &bs);
+    void put(byte b);
+    void put(const char *b, int size);
+    void put(const byte *b, int size);
+    void put(const std::vector<byte> &bs);
+    void put(const std::string &s);
 
-    void putString(const std::string &s);
+    void put(int i);
+    void put(float f);
+    void put(double d);
 
-    void putInt(int i);
-    void putFloat(float f);
-    void putDouble(double d);
-
-    byte getByte();
-    void getBytes(byte *dest, int size);
-    std::vector<byte> getBytes(int size);
-    std::string getString(int length);
-
+    byte read();
     void read(byte *b, int size);
     std::vector<byte> read(int size);
-    std::string sread(int length);
-
     std::vector<byte> readUntil(byte mark);
+    std::string sread(int length);
     std::string sreadUntil(byte mark);
 
-    int getInt();
-    float getFloat();
-    double getDouble();
+    int readInt();
+    float readFloat();
+    double readDouble();
 
     byte &operator[](int i);
 

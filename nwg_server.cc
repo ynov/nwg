@@ -64,7 +64,7 @@ void EVCB::doRead(evutil_socket_t fd, short events, void *arg)
         if (result <= 0)
             break;
 
-        readBuffer.putBytes(buf, result);
+        readBuffer.put(buf, result);
     }
     readBuffer.flip();
 
@@ -117,7 +117,7 @@ void EVCB::doWrite(evutil_socket_t fd, short events, void *arg)
 
     protocolCodec.decode(&session.getWriteObject(), &writeBuffer);
 
-    std::vector<byte> b = writeBuffer.getBytes(writeBuffer.remaining());
+    std::vector<byte> b = writeBuffer.read(writeBuffer.remaining());
     ssize_t result = send(fd, b.data(), b.size(), 0);
 
     if (result < 0) {

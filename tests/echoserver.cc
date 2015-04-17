@@ -23,15 +23,15 @@ class EchoHandler : public Nwg::Handler
         Nwg::ByteBuffer &out = *new Nwg::ByteBuffer(BUFFSIZE);
 
         if (num_client > MAX_CLIENT) {
-            out.putString("Client limit exceeded!\n");
+            out.put("Client limit exceeded!\n");
             out.flip();
 
             session.write(&out);
             return;
         }
 
-        out.putString("Just type anything. Send key ^] to exit from telnet.\n");
-        out.putString("1. << ");
+        out.put("Just type anything. Send key ^] to exit from telnet.\n");
+        out.put("1. << ");
         out.flip();
 
         session.write(&out);
@@ -58,9 +58,9 @@ class EchoHandler : public Nwg::Handler
         msg.jump(0);
 
         Nwg::ByteBuffer &out = *new Nwg::ByteBuffer(BUFFSIZE);
-        out.putString(std::to_string(msg_received) + ". >> ");
-        out.putBytes(msg.read(msg.remaining()));
-        out.putString("\n" + std::to_string(msg_received + 1) + ". << ");
+        out.put(std::to_string(msg_received) + ". >> ");
+        out.put(msg.read(msg.remaining()));
+        out.put("\n" + std::to_string(msg_received + 1) + ". << ");
         out.flip();
 
         session.write(&out);

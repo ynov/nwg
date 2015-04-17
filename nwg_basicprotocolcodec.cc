@@ -27,7 +27,7 @@ void BasicProtocolCodec::decode(Object *in, ByteBuffer *out) const
     ByteBuffer *decoded = dynamic_cast<ByteBuffer *>(in);
 
     out->reset();
-    out->putBytes(decoded->getBytes(decoded->remaining()));
+    out->put(decoded->read(decoded->remaining()));
     out->flip();
 }
 

@@ -12,10 +12,10 @@ class DummyHandler : public Nwg::Handler
         printf("On messageReceived()!\n");
 
         Nwg::ByteBuffer &b = dynamic_cast<Nwg::ByteBuffer &>(message);
-        printf("In Message: %s\n", b.getString(b.remaining()).c_str());
+        printf("In Message: %s\n", b.sread(b.remaining()).c_str());
 
         Nwg::ByteBuffer *out = new Nwg::ByteBuffer(session.getBufferAllocationSize());
-        out->putString("Grumpy wizards make toxic brew for the evil queen and jack.");
+        out->put("Grumpy wizards make toxic brew for the evil queen and jack.");
         out->flip();
 
         session.write(out);
@@ -26,7 +26,7 @@ class DummyHandler : public Nwg::Handler
         printf("On messageSent()!\n");
 
         Nwg::ByteBuffer &b = dynamic_cast<Nwg::ByteBuffer &>(message);
-        printf("Out Message: %s\n", b.getString(b.remaining()).c_str());
+        printf("Out Message: %s\n", b.sread(b.remaining()).c_str());
     }
 };
 
@@ -42,7 +42,7 @@ public:
         Nwg::ByteBuffer &in = session.getReadBuffer();
         Nwg::ByteBuffer &out = session.getWriteBuffer();
 
-        in.putString("The quick brown fox jumps over the lazy dog.");
+        in.put("The quick brown fox jumps over the lazy dog.");
         in.flip();
 
         Nwg::ObjectContainer oc;
@@ -52,7 +52,7 @@ public:
 
         getProtocolCodec().decode(&session.getWriteObject(), &out);
         Nwg::ByteBuffer outCopy = out;
-        printf(" >> %s\n", out.getString(out.remaining()).c_str());
+        printf(" >> %s\n", out.sread(out.remaining()).c_str());
         getHandler().messageSent(session, outCopy);
     }
 };
