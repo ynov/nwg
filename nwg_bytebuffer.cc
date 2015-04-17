@@ -91,6 +91,7 @@ std::vector<byte> ByteBuffer::getBytes(int size)
 
 void ByteBuffer::read(byte *dest, int size) { getBytes(dest, size); }
 std::vector<byte> ByteBuffer::read(int size) { return getBytes(size); }
+std::string ByteBuffer::sread(int length) { return getString(length); }
 
 std::vector<byte> ByteBuffer::readUntil(byte mark)
 {
@@ -104,6 +105,20 @@ std::vector<byte> ByteBuffer::readUntil(byte mark)
     }
 
     return bs;
+}
+
+std::string ByteBuffer::sreadUntil(byte mark)
+{
+    std::string s;
+    s.reserve(4096);
+
+    byte b = getByte();
+    while (b != mark && _position < _limit) {
+        s.push_back(b);
+        b = getByte();
+    }
+
+    return s;
 }
 
 std::string ByteBuffer::getString(int length)

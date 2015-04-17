@@ -42,12 +42,14 @@ public:
     byte getByte();
     void getBytes(byte *dest, int size);
     std::vector<byte> getBytes(int size);
+    std::string getString(int length);
 
     void read(byte *b, int size);
     std::vector<byte> read(int size);
-    std::vector<byte> readUntil(byte mark);
+    std::string sread(int length);
 
-    std::string getString(int length);
+    std::vector<byte> readUntil(byte mark);
+    std::string sreadUntil(byte mark);
 
     int getInt();
     float getFloat();

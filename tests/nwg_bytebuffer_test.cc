@@ -87,17 +87,14 @@ int main(int argc, char **argv)
     b6.putString("Hello, world!\nThe quick brown fox jumps over the lazy dog\nNo newline, no newline...");
     b6.flip();
 
-    std::vector<byte> a = b6.readUntil('\n');
-    std::vector<byte> b = b6.readUntil('\n');
-    std::vector<byte> c = b6.readUntil('\n');
-    a.push_back('\0');
-    b.push_back('\0');
-    c.push_back('\0');
+    std::string a = b6.sreadUntil('\n');
+    std::string b = b6.sreadUntil('\n');
+    std::string c = b6.sreadUntil('\n');
 
     printf("\n-- readUntil() --\n");
-    printf("a = %s\n", a.data());
-    printf("b = %s\n", b.data());
-    printf("c = %s\n", c.data());
+    printf("a = %s\n", a.c_str());
+    printf("b = %s\n", b.c_str());
+    printf("c = %s\n", c.c_str());
 
     printf("\n-- END --\n");
     return 0;
