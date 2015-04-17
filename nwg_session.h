@@ -72,6 +72,12 @@ public:
         return *(T *) _vars[key].get();
     }
 
+    template<class T>
+    T *getPtr(const std::string &key)
+    {
+        return (T *) _vars[key].get();
+    }
+
 private:
     int _bufferAllocationSize;
     std::shared_ptr<Object> _writeObject;

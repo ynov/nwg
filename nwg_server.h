@@ -71,6 +71,12 @@ public:
         return *(T *) _vars[key].get();
     }
 
+    template<class T>
+    T *getPtr(const std::string &key)
+    {
+        return (T *) _vars[key].get();
+    }
+
 private:
     std::shared_ptr<ProtocolCodec> _protocolCodec;
     std::shared_ptr<Handler> _handler;
