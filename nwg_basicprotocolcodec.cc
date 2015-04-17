@@ -11,24 +11,24 @@ BasicProtocolCodec::~BasicProtocolCodec()
 {
 }
 
-void BasicProtocolCodec::encode(ByteBuffer &in, ObjectContainer &out) const
+void BasicProtocolCodec::encode(ByteBuffer *in, ObjectContainer *out) const
 {
-    ByteBuffer *encoded = new ByteBuffer(in.ssize());
-    *encoded = in;
-    out.setObject(encoded);
+    ByteBuffer *encoded = new ByteBuffer(in->ssize());
+    *encoded = *in;
+    out->setObject(encoded);
 }
 
-void BasicProtocolCodec::decode(Object &in, ByteBuffer &out) const
+void BasicProtocolCodec::decode(Object *in, ByteBuffer *out) const
 {
-    ByteBuffer *decoded = dynamic_cast<ByteBuffer *>(&in);
-
-    if (decoded == nullptr) {
+    if (in == nullptr) {
         return;
     }
 
-    out.reset();
-    out.putBytes(decoded->getBytes(decoded->remaining()));
-    out.flip();
+    ByteBuffer *decoded = dynamic_cast<ByteBuffer *>(in);
+
+    out->reset();
+    out->putBytes(decoded->getBytes(decoded->remaining()));
+    out->flip();
 }
 
 } /* namespace Nwg */

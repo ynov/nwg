@@ -12,8 +12,8 @@ public:
     BasicProtocolCodec();
     virtual ~BasicProtocolCodec();
 
-    void encode(ByteBuffer &in, ObjectContainer &out) const;
-    void decode(Object &in, ByteBuffer &out) const;
+    void encode(ByteBuffer *in, ObjectContainer *out) const;
+    void decode(Object *in, ByteBuffer *out) const;
 };
 
 } /* namespace Nwg */

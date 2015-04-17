@@ -85,7 +85,7 @@ void EVCB::doRead(evutil_socket_t fd, short events, void *arg)
     }
 
     Nwg::ObjectContainer oc;
-    protocolCodec.encode(session.getReadBuffer(), oc);
+    protocolCodec.encode(&session.getReadBuffer(), &oc);
 
     session.resetWrite();
     handler.messageReceived(session, oc.getObject());
@@ -115,7 +115,7 @@ void EVCB::doWrite(evutil_socket_t fd, short events, void *arg)
     Handler &handler = server.getHandler();
     ByteBuffer &writeBuffer = session.getWriteBuffer();
 
-    protocolCodec.decode(session.getWriteObject(), writeBuffer);
+    protocolCodec.decode(&session.getWriteObject(), &writeBuffer);
 
     std::vector<byte> b = writeBuffer.getBytes(writeBuffer.remaining());
     ssize_t result = send(fd, b.data(), b.size(), 0);
