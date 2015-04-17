@@ -74,7 +74,17 @@ void EVCB::doRead(evutil_socket_t fd, short events, void *arg)
 
         return;
     } else if (result < 0) {
-        if (errno != EAGAIN) {
+        bool err_not_eagain = false;
+
+#ifdef __unix__
+        err_not_eagain = errno != EAGAIN;
+#endif /* __unix__ */
+
+#ifdef _WIN32
+        err_not_eagain = WSAGetLastError() != WSAEWOULDBLOCK;
+#endif /* _W32 */
+
+        if (err_not_eagain) {
             handler.sessionClosed(session);
             delete &session;
 
@@ -118,7 +128,7 @@ void EVCB::doWrite(evutil_socket_t fd, short events, void *arg)
     protocolCodec.decode(&session.getWriteObject(), &writeBuffer);
 
     std::vector<byte> b = writeBuffer.read(writeBuffer.remaining());
-    ssize_t result = send(fd, b.data(), b.size(), 0);
+    ssize_t result = send(fd, (char *) b.data(), b.size(), 0);
 
     if (result < 0) {
         // TODO
@@ -197,9 +207,25 @@ void Server::setBuffSize(int buffSize)
 
 void Server::run()
 {
-    struct sockaddr_in sin;
+#ifdef _WIN32
+    do {
+        WORD wVersionRequested;
+        WSADATA wsaData;
+        int err;
 
+        wVersionRequested = MAKEWORD(2, 2);
+
+        err = WSAStartup(wVersionRequested, &wsaData);
+        if (err != 0) {
+            printf("WSAStartup failed with error: %d\n", err);
+            return;
+        }
+    } while(0);
+#endif /* _WIN32 */
+
+    struct sockaddr_in sin;
     struct event_base *base = event_base_new();
+
     if (!base) {
         perror("event_base_new()");
         return;
@@ -212,10 +238,12 @@ void Server::run()
     _listener = socket(AF_INET, SOCK_STREAM, 0);
     evutil_make_socket_nonblocking(_listener);
 
+#ifdef __unix__
     do {
         int one = 1;
         setsockopt(_listener, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one));
     } while(0);
+#endif /* __unix__ */
 
     if (bind(_listener, (struct sockaddr *) &sin, sizeof(sin)) < 0) {
         perror("bind()");
