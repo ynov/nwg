@@ -2,7 +2,7 @@ CXX=g++
 DFLAGS=
 CXXINCLUDEDIR=-I`pwd` -I`pwd`/deps/libevent/include -I`pwd`/deps/boost
 CXXFLAGS=-O2 -g -Wall -fmessage-length=0 -std=c++11 $(CXXINCLUDEDIR) $(DFLAGS)
-LIBDIR=-L`pwd` -L`pwd`/deps/libevent/.libs -L`pwd`/deps/boost/stage/lib
+LIBDIR=-L`pwd`
 LIBS=$(LIBDIR) -lnwg -levent
 BOOST_BOOTSTRAP=./bootstrap.sh
 BOOSTLIBS=-lboost_regex -lboost_filesystem -lboost_system
@@ -13,14 +13,7 @@ ifeq ($(OS),Windows_NT)
 	BOOST_BOOTSTRAP=cmd /c "bootstrap.bat mingw"
 endif
 
-.NOTPARALLEL: libboost $(libbooost_all) libevent $(libevent_a)
-
-all: libboost libevent \
-	libnwg.a \
-	tests \
-	examples
-
-deps: libboost libevent
+all: libnwg.a tests examples
 
 tests: libnwg.a \
 	tests/test_nwg_bytebuffer \
@@ -30,21 +23,24 @@ examples: libnwg.a \
 	examples/exm_echoserver \
 	examples/exm_httpserverv1
 
-libevent_a=deps/libevent/.libs/libevent.a
+##############################################################################
+##############################################################################
 
-$(libevent_a):
+deps: libboost libevent
+
+### libevent
+deps/libevent/.libs/libevent.a:
 	cd deps/libevent && \
 	./configure --disable-shared && \
 	make -j4
 
-libevent: $(libevent_a)
+libevent.a: deps/libevent/.libs/libevent.a
+	cp deps/libevent/.libs/libevent.a libevent.a
 
-libboost_regex_a=deps/boost/stage/lib/libboost_regex.a
-libboost_filesystem_a=deps/boost/stage/lib/libboost_filesystem.a
-libboost_system.a=deps/boost/stage/lib/libboost_system.a
-libboost_all=$(libboost_regex_a) $(libboost_filesystem.a) $(libboost_system.a)
+libevent: libevent.a
 
-$(libboost_all):
+### boost
+deps/boost/stage/lib/libboost_regex.a deps/boost/stage/lib/libboost_filesystem.a deps/boost/stage/lib/libboost_system.a:
 	cd deps/boost && \
 	$(BOOST_BOOTSTRAP) && \
 	./b2 --with-regex --with-filesystem link=static threading=single variant=release toolset=gcc &&\
@@ -53,9 +49,21 @@ $(libboost_all):
 	if [ ! -e libboost_filesystem.a ]; then mv -f libboost_filesystem*.a libboost_filesystem.a; fi && \
 	if [ ! -e libboost_system.a ]; then mv -f libboost_system*.a libboost_system.a; fi
 
-libboost: $(libboost_all)
+libboost_regex.a: deps/boost/stage/lib/libboost_regex.a
+	cp deps/boost/stage/lib/libboost_regex.a libboost_regex.a
 
-libnwg.a: $(libevent_a) \
+libboost_filesystem.a: deps/boost/stage/lib/libboost_filesystem.a
+	cp deps/boost/stage/lib/libboost_filesystem.a libboost_filesystem.a
+
+libboost_system.a: deps/boost/stage/lib/libboost_system.a
+	cp deps/boost/stage/lib/libboost_system.a libboost_system.a
+
+libboost: libboost_regex.a libboost_filesystem.a libboost_system.a
+
+##############################################################################
+##############################################################################
+
+libnwg.a: \
 	nwg_objectcontainer.o \
 	nwg_object.o \
 	nwg_bytebuffer.o \
@@ -85,7 +93,7 @@ nwg_protocolcodec.o: nwg_protocolcodec.cc nwg_protocolcodec.h
 nwg_basicprotocolcodec.o: nwg_basicprotocolcodec.cc nwg_basicprotocolcodec.h
 	$(CXX) -c nwg_basicprotocolcodec.cc $(CXXFLAGS)
 
-nwg_handler.o: nwg_handler.cc nwg_handler.h $(libevent_a)
+nwg_handler.o: nwg_handler.cc nwg_handler.h
 	$(CXX) -c nwg_handler.cc $(CXXFLAGS)
 
 nwg_server.o: nwg_server.cc nwg_server.h nwg_common_socket_include.h
