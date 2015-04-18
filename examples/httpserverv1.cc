@@ -5,7 +5,9 @@
 
 #define BUFFSIZE 32768
 
+#ifndef SILENT
 #define SILENT 1
+#endif
 
 #if SILENT
 #define _printf(...)
