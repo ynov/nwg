@@ -1,5 +1,6 @@
 CXX=g++
-CXXFLAGS=-O2 -g -Wall -fmessage-length=0 -std=c++11 -I`pwd`/deps/libevent/include
+DFLAGS=
+CXXFLAGS=-O2 -g -Wall -fmessage-length=0 -std=c++11 -I`pwd`/deps/libevent/include $(DFLAGS)
 LIBS=-L`pwd` -L`pwd`/deps/libevent/.libs -lnwg -levent
 override EXTRALIBS := -lboost_regex
 

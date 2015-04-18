@@ -19,12 +19,18 @@
 #define close closesocket
 #endif
 
+#if EVCBDEBUG
+#define _dprintf(...) fprintf (stdout, __VA_ARGS__)
+#else
+#define _dprintf(...)
+#endif
+
 namespace Nwg
 {
 
 void EVCB::doAccept(evutil_socket_t listener, short event, void *arg)
 {
-    // printf("doAccept()\n");
+    _dprintf("D-- %40s --\n", "doAccept() IN");
 
     ListenerEventArg &listenerEventArg = *(ListenerEventArg *) arg;
 
@@ -53,6 +59,7 @@ void EVCB::doAccept(evutil_socket_t listener, short event, void *arg)
 
             handler.sessionClosed(session);
 
+            _dprintf("D-- %40s --\n", "doAccept() OUT (closed)");
             delete &session;
             return;
         }
@@ -63,11 +70,13 @@ void EVCB::doAccept(evutil_socket_t listener, short event, void *arg)
             event_add(session.readEvent, NULL);
         }
     }
+
+    _dprintf("D-- %40s --\n", "doAccept() OUT");
 }
 
 void EVCB::doRead(evutil_socket_t fd, short events, void *arg)
 {
-    // printf("doRead()\n");
+    _dprintf("D-- %40s --\n", "doRead() IN");
 
     Session &session = *((Session *) arg);
     Server &server = session.getServer();
@@ -90,8 +99,9 @@ void EVCB::doRead(evutil_socket_t fd, short events, void *arg)
 
     if (result == 0) {
         handler.sessionClosed(session);
-        delete &session;
 
+        _dprintf("D-- %40s --\n", "doRead() OUT (closed, result == 0)");
+        delete &session;
         return;
     } else if (result < 0) {
         bool err_not_eagain = false;
@@ -109,6 +119,8 @@ void EVCB::doRead(evutil_socket_t fd, short events, void *arg)
 
             perror("recv()");
 
+            _dprintf("D-- %40s --\n", "doRead() OUT (closed, err_not_eagain)");
+            _dprintf("DDDD-- errno == %d --\n", errno);
             delete &session;
             return;
         }
@@ -127,6 +139,7 @@ void EVCB::doRead(evutil_socket_t fd, short events, void *arg)
 
         handler.sessionClosed(session);
 
+        _dprintf("D-- %40s --\n", "doRead() OUT (closed)");
         delete &session;
         return;
     }
@@ -134,11 +147,13 @@ void EVCB::doRead(evutil_socket_t fd, short events, void *arg)
     if (session.isWriteObjectPresent()) {
         event_add(session.writeEvent, NULL);
     }
+
+    _dprintf("D-- %40s --\n", "doRead() OUT");
 }
 
 void EVCB::doWrite(evutil_socket_t fd, short events, void *arg)
 {
-    // printf("doWrite()\n");
+    _dprintf("D-- %40s --\n", "doWrite() IN");
 
     Session &session = *((Session *) arg);
     Server &server = session.getServer();
@@ -152,7 +167,8 @@ void EVCB::doWrite(evutil_socket_t fd, short events, void *arg)
     ssize_t result = send(fd, (char *) b.data(), b.size(), 0);
 
     if (result < 0) {
-        printf("result < 0 == %d\n", result);
+        _dprintf("D-- %40s --\n", "doWrite() :: result < 0");
+        _dprintf("DDDD-- result == %d --\n", (int) result);
         // TODO
     }
 
@@ -163,8 +179,10 @@ void EVCB::doWrite(evutil_socket_t fd, short events, void *arg)
         event_del(session.writeEvent);
 
         close(fd);
+
         handler.sessionClosed(session);
 
+        _dprintf("D-- %40s --\n", "doWrite() OUT (closed)");
         delete &session;
         return;
     }
@@ -173,6 +191,8 @@ void EVCB::doWrite(evutil_socket_t fd, short events, void *arg)
         event_del(session.writeEvent);
         event_add(session.readEvent, NULL);
     }
+
+    _dprintf("D-- %40s --\n", "doWrite() OUT");
 }
 
 } /* namespace Nwg */
