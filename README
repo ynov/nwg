@@ -1,0 +1,1 @@
+make deps && make -j4
