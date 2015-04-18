@@ -30,6 +30,8 @@ void BasicProtocolCodec::decode(Object *in, ByteBuffer *out) const
     out->reset();
     out->put(decoded->read(decoded->remaining()));
     out->flip();
+
+    decoded->flip();
 }
 
 } /* namespace Nwg */

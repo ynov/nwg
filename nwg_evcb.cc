@@ -15,6 +15,10 @@
 #include "nwg_server.h"
 #include "nwg_session.h"
 
+#ifdef _WIN32
+#define close closesocket
+#endif
+
 namespace Nwg
 {
 
@@ -46,9 +50,10 @@ void EVCB::doAccept(evutil_socket_t listener, short event, void *arg)
 
         if (session.isClosed()) {
             close(fd);
-            handler.sessionClosed(session);
-            delete &session;
 
+            handler.sessionClosed(session);
+
+            delete &session;
             return;
         }
 
@@ -101,10 +106,10 @@ void EVCB::doRead(evutil_socket_t fd, short events, void *arg)
 
         if (err_not_eagain) {
             handler.sessionClosed(session);
-            delete &session;
 
             perror("recv()");
 
+            delete &session;
             return;
         }
     }
@@ -119,9 +124,10 @@ void EVCB::doRead(evutil_socket_t fd, short events, void *arg)
         event_del(session.readEvent);
 
         close(fd);
-        handler.sessionClosed(session);
-        delete &session;
 
+        handler.sessionClosed(session);
+
+        delete &session;
         return;
     }
 
@@ -146,19 +152,20 @@ void EVCB::doWrite(evutil_socket_t fd, short events, void *arg)
     ssize_t result = send(fd, (char *) b.data(), b.size(), 0);
 
     if (result < 0) {
+        printf("result < 0 == %d\n", result);
         // TODO
     }
 
     session.resetWrite();
-    handler.messageSent(session, session.getWriteObject());
+    handler.messageSent(session, session.getLastWriteObject());
 
     if (session.isClosed()) {
         event_del(session.writeEvent);
 
         close(fd);
         handler.sessionClosed(session);
-        delete &session;
 
+        delete &session;
         return;
     }
 
