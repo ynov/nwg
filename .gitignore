@@ -1,4 +1,5 @@
 *.o
 *.a
 tests/test_*
+examples/exm_*
 .*.swp

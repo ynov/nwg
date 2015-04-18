@@ -3,11 +3,14 @@ CXXFLAGS=-O2 -g -Wall -fmessage-length=0 -std=c++11 -I/usr/local/include
 LIBS=-L`pwd` -lnwg -levent -lws2_32 -L/usr/local/lib
 EXTRALIBS=-lboost_regex
 
-all: libnwg.a tests
+all: libnwg.a tests examples
 
-tests:  tests/test_nwg_bytebuffer \
-    tests/test_nwg_server \
-    tests/test_echoserver
+tests: \
+    tests/test_nwg_bytebuffer \
+    tests/test_nwg_server
+
+examples: \
+    examples/exm_echoserver
 
 libnwg.a: nwg_objectcontainer.o \
     nwg_object.o \
@@ -58,12 +61,13 @@ tests/test_nwg_server: libnwg.a tests/nwg_server_test.cc
         tests/nwg_server_test.cc \
         $(CXXFLAGS) $(LIBS)
 
-tests/test_echoserver: libnwg.a tests/echoserver.cc
-    $(CXX) -I`pwd` -o tests/test_echoserver \
-        tests/echoserver.cc \
+examples/exm_echoserver: libnwg.a examples/echoserver.cc
+    $(CXX) -I`pwd` -o examples/exm_echoserver \
+        examples/echoserver.cc \
         $(CXXFLAGS) $(LIBS)
 
 clean:
     rm -f tests/test_*
+    rm -f examples/exm_*
     rm -f *.o
     rm -f *.a
