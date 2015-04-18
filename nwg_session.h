@@ -34,6 +34,7 @@ public:
     void resetWrite();
 
     Object &getWriteObject();
+    Object &getLastWriteObject();
     ByteBuffer &getReadBuffer();
     ByteBuffer &getWriteBuffer();
     Server &getServer();
@@ -71,6 +72,7 @@ public:
 private:
     int _bufferAllocationSize;
     std::shared_ptr<Object> _writeObject;
+    std::shared_ptr<Object> _lastWriteObject;
 
     ByteBuffer _readBuffer;
     ByteBuffer _writeBuffer;

@@ -12,6 +12,7 @@ Session::Session(int bufferAllocationSize,
         Server *server)
     : _bufferAllocationSize(bufferAllocationSize),
       _writeObject(nullptr),
+      _lastWriteObject(nullptr),
       _readBuffer(ByteBuffer(bufferAllocationSize)),
       _writeBuffer(ByteBuffer(bufferAllocationSize)),
       _fd(fd),
@@ -66,6 +67,7 @@ bool Session::isWriteObjectPresent()
 void Session::resetWriteObject()
 {
     if (_writeObject.get() != nullptr) {
+        _lastWriteObject = std::move(_writeObject);
         _writeObject.reset();
         _writeObject = nullptr;
     }
@@ -80,6 +82,11 @@ void Session::resetWrite()
 Object &Session::getWriteObject()
 {
     return *_writeObject;
+}
+
+Object &Session::getLastWriteObject()
+{
+    return *_lastWriteObject;
 }
 
 ByteBuffer &Session::getReadBuffer()
