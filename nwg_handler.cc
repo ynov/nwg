@@ -1,4 +1,5 @@
 #include "nwg_handler.h"
+#include "nwg_session.h"
 
 namespace Nwg
 {

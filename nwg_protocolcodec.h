@@ -3,10 +3,11 @@
 
 #include "nwg_object.h"
 #include "nwg_objectcontainer.h"
-#include "nwg_bytebuffer.h"
 
 namespace Nwg
 {
+
+class ByteBuffer;
 
 class ProtocolCodec: public Object
 {

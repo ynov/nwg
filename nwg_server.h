@@ -3,47 +3,19 @@
 
 #include <map>
 #include <memory>
-
-#ifdef __unix__
-#include <netinet/in.h>
-#include <sys/socket.h>
-#endif /* __unix__ */
-
-#ifdef _WIN32
-#include <winsock2.h>
-#include <windows.h>
-typedef int socklen_t;
-
-#undef FD_SETSIZE
-#define FD_SETSIZE 2048
-#endif /* _WIN32 */
-
-#include <fcntl.h>
-#include <unistd.h>
+#include <string>
 
 #include <event2/event.h>
-
-#include <cstring>
-#include <cstdlib>
-#include <cstdio>
-#include <cerrno>
-
-#include "nwg_object.h"
-#include "nwg_handler.h"
-#include "nwg_protocolcodec.h"
 
 #define DEFAULT_BUFFSIZE 32768
 #define SMALL_BUFFSIZE 1024
 
+#include "nwg_handler.h"
+
 namespace Nwg
 {
 
-struct EVCB
-{
-    static void doAccept(evutil_socket_t listener, short event, void *arg);
-    static void doRead(evutil_socket_t fd, short events, void *arg);
-    static void doWrite(evutil_socket_t fd, short events, void *arg);
-};
+class ProtocolCodec;
 
 class Server : public Object
 {

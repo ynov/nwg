@@ -1,6 +1,7 @@
 #include "nwg_session.h"
 
 #include "nwg_server.h"
+#include "nwg_evcb.h"
 
 namespace Nwg
 {

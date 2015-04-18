@@ -1,7 +1,7 @@
 #include <cstdio>
 
-#include "nwg_server.h"
-#include "nwg_basicprotocolcodec.h"
+#include <nwg.h>
+#include <nwg_basicprotocolcodec.h>
 
 #define BUFFSIZE 4096
 

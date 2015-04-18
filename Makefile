@@ -16,7 +16,8 @@ libnwg.a: nwg_objectcontainer.o \
 	nwg_protocolcodec.o \
 	nwg_basicprotocolcodec.o \
 	nwg_handler.o \
-	nwg_server.o
+	nwg_server.o \
+	nwg_evcb.o
 	ar rcs libnwg.a *.o
 
 nwg_objectcontainer.o: nwg_objectcontainer.cc nwg_objectcontainer.h
@@ -40,8 +41,12 @@ nwg_basicprotocolcodec.o: nwg_basicprotocolcodec.cc nwg_basicprotocolcodec.h
 nwg_handler.o: nwg_handler.cc nwg_handler.h
 	$(CXX) -c nwg_handler.cc $(CXXFLAGS)
 
-nwg_server.o: nwg_server.cc nwg_server.h
+nwg_server.o: nwg_server.cc nwg_server.h nwg_common_socket_include.h
 	$(CXX) -c nwg_server.cc $(CXXFLAGS)
+
+nwg_evcb.o: nwg_evcb.cc nwg_evcb.h nwg_common_socket_include.h
+	$(CXX) -c nwg_evcb.cc $(CXXFLAGS)
+	
 
 tests/test_nwg_bytebuffer: libnwg.a tests/nwg_bytebuffer_test.cc
 	$(CXX) -I`pwd` -o tests/test_nwg_bytebuffer \

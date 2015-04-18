@@ -2,10 +2,11 @@
 #define NWG_HANDLER_H_
 
 #include "nwg_object.h"
-#include "nwg_session.h"
 
 namespace Nwg
 {
+
+class Session;
 
 class Handler: public Object
 {

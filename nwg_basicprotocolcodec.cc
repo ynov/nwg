@@ -1,4 +1,5 @@
 #include "nwg_basicprotocolcodec.h"
+#include "nwg_bytebuffer.h"
 
 namespace Nwg
 {

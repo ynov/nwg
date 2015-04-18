@@ -1,7 +1,7 @@
 #include <cstdio>
 
-#include "nwg_server.h"
-#include "nwg_basicprotocolcodec.h"
+#include <nwg.h>
+#include <nwg_basicprotocolcodec.h>
 
 #define BUFFSIZE 32768
 #define MAX_CLIENT 5
@@ -77,7 +77,6 @@ class EchoHandler : public Nwg::Handler
         }
     }
 };
-
 
 void run()
 {
