@@ -10,7 +10,8 @@ tests: \
 	tests/test_nwg_server
 
 examples: \
-	examples/exm_echoserver
+	examples/exm_echoserver \
+	examples/exm_httpserverv1
 
 libnwg.a: nwg_objectcontainer.o \
 	nwg_object.o \
@@ -64,6 +65,11 @@ tests/test_nwg_server: libnwg.a tests/nwg_server_test.cc
 examples/exm_echoserver: libnwg.a examples/echoserver.cc
 	$(CXX) -I`pwd` -o examples/exm_echoserver \
 		examples/echoserver.cc \
+		$(CXXFLAGS) $(LIBS)
+
+examples/exm_httpserverv1: libnwg.a examples/httpserverv1.cc
+	$(CXX) -I`pwd` -o examples/exm_httpserverv1 \
+		examples/httpserverv1.cc \
 		$(CXXFLAGS) $(LIBS)
 
 clean:
