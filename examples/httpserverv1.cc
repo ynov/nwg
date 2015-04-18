@@ -67,8 +67,7 @@ class HttpHandler : public Nwg::Handler
 
     void sessionClosed(Nwg::Session &session)
     {
-        int req_no = session.get<int>("req_no");
-        _printf("==== SESSION CLOSED #%d ====\n\n", req_no);
+        _printf("==== SESSION CLOSED #%d ====\n\n", session.get<int>("req_no"));
     }
 };
 
