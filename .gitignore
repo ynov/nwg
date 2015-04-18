@@ -3,3 +3,5 @@
 tests/test_*
 examples/exm_*
 .*.swp
+deps/
+deps.ok
