@@ -1,6 +1,6 @@
 CXX=g++
 CXXFLAGS=-O2 -g -Wall -fmessage-length=0 -std=c++11 -I/usr/local/include
-LIBS=-L./ -lnwg -levent -lws2_32 -L/usr/local/lib
+LIBS=-L`pwd` -lnwg -levent -lws2_32 -L/usr/local/lib
 EXTRALIBS=-lboost_regex
 
 all: libnwg.a tests

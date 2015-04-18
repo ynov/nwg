@@ -1,6 +1,6 @@
 CXX=g++
 CXXFLAGS=-O2 -g -Wall -fmessage-length=0 -std=c++11
-LIBS=-L./ -lnwg -levent
+LIBS=-L`pwd` -lnwg -levent
 EXTRALIBS=-lboost_regex
 
 all: libnwg.a tests
@@ -44,17 +44,17 @@ nwg_server.o: nwg_server.cc nwg_server.h
 	$(CXX) -c nwg_server.cc $(CXXFLAGS)
 
 tests/test_nwg_bytebuffer: libnwg.a tests/nwg_bytebuffer_test.cc
-	$(CXX) -I./ -o tests/test_nwg_bytebuffer \
+	$(CXX) -I`pwd` -o tests/test_nwg_bytebuffer \
 		tests/nwg_bytebuffer_test.cc \
 		$(CXXFLAGS) $(LIBS)
 
 tests/test_nwg_server: libnwg.a tests/nwg_server_test.cc
-	$(CXX) -I./ -o tests/test_nwg_server \
+	$(CXX) -I`pwd` -o tests/test_nwg_server \
 		tests/nwg_server_test.cc \
 		$(CXXFLAGS) $(LIBS)
 
 tests/test_echoserver: libnwg.a tests/echoserver.cc
-	$(CXX) -I./ -o tests/test_echoserver \
+	$(CXX) -I`pwd` -o tests/test_echoserver \
 		tests/echoserver.cc \
 		$(CXXFLAGS) $(LIBS)
 
