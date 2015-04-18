@@ -44,6 +44,7 @@ class HttpHandler : public Nwg::Handler
         out.put("</head>\n");
         out.put("<body>\n");
         out.put("    <h1>The quick brown fox jumps over the lazy dog.</h1>\n");
+        out.put("    <pre>request #" + std::to_string(session.get<int>("req_no")) + "</pre>\n");
         out.put("</body>\n");
         out.put("</html>\n");
 
