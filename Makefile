@@ -23,6 +23,18 @@ examples: libnwg.a \
 	examples/exm_echoserver \
 	examples/exm_httpserverv1
 
+libnwg.a: \
+	nwg_objectcontainer.o \
+	nwg_object.o \
+	nwg_bytebuffer.o \
+	nwg_session.o \
+	nwg_protocolcodec.o \
+	nwg_basicprotocolcodec.o \
+	nwg_handler.o \
+	nwg_server.o \
+	nwg_evcb.o
+	ar rcs libnwg.a nwg_*.o
+
 ##############################################################################
 ##############################################################################
 
@@ -35,7 +47,7 @@ deps/libevent/.libs/libevent.a:
 	make -j4
 
 libevent.a: deps/libevent/.libs/libevent.a
-	cp deps/libevent/.libs/libevent.a libevent.a
+	cp -f $< $(notdir $<)
 
 libevent: libevent.a
 
@@ -50,80 +62,35 @@ deps/boost/stage/lib/libboost_regex.a deps/boost/stage/lib/libboost_filesystem.a
 	if [ ! -e libboost_system.a ]; then mv -f libboost_system*.a libboost_system.a; fi
 
 libboost_regex.a: deps/boost/stage/lib/libboost_regex.a
-	cp deps/boost/stage/lib/libboost_regex.a libboost_regex.a
+	cp -f $< $(notdir $<)
 
 libboost_filesystem.a: deps/boost/stage/lib/libboost_filesystem.a
-	cp deps/boost/stage/lib/libboost_filesystem.a libboost_filesystem.a
+	cp -f $< $(notdir $<)
 
 libboost_system.a: deps/boost/stage/lib/libboost_system.a
-	cp deps/boost/stage/lib/libboost_system.a libboost_system.a
+	cp -f $< $(notdir $<)
 
 libboost: libboost_regex.a libboost_filesystem.a libboost_system.a
 
 ##############################################################################
 ##############################################################################
 
-libnwg.a: \
-	nwg_objectcontainer.o \
-	nwg_object.o \
-	nwg_bytebuffer.o \
-	nwg_session.o \
-	nwg_protocolcodec.o \
-	nwg_basicprotocolcodec.o \
-	nwg_handler.o \
-	nwg_server.o \
-	nwg_evcb.o
-	ar rcs libnwg.a *.o
+%.o: %.cc %.h nwg_common_socket_include.h
+	$(CXX) -c $< $(CXXFLAGS)
 
-nwg_objectcontainer.o: nwg_objectcontainer.cc nwg_objectcontainer.h
-	$(CXX) -c nwg_objectcontainer.cc $(CXXFLAGS)
-
-nwg_object.o: nwg_object.cc nwg_object.h
-	$(CXX) -c nwg_object.cc $(CXXFLAGS)
-
-nwg_bytebuffer.o: nwg_bytebuffer.cc nwg_bytebuffer.h
-	$(CXX) -c nwg_bytebuffer.cc $(CXXFLAGS)
-
-nwg_session.o: nwg_session.cc nwg_session.h
-	$(CXX) -c nwg_session.cc $(CXXFLAGS)
-
-nwg_protocolcodec.o: nwg_protocolcodec.cc nwg_protocolcodec.h
-	$(CXX) -c nwg_protocolcodec.cc $(CXXFLAGS)
-
-nwg_basicprotocolcodec.o: nwg_basicprotocolcodec.cc nwg_basicprotocolcodec.h
-	$(CXX) -c nwg_basicprotocolcodec.cc $(CXXFLAGS)
-
-nwg_handler.o: nwg_handler.cc nwg_handler.h
-	$(CXX) -c nwg_handler.cc $(CXXFLAGS)
-
-nwg_server.o: nwg_server.cc nwg_server.h nwg_common_socket_include.h
-	$(CXX) -c nwg_server.cc $(CXXFLAGS)
-
-nwg_evcb.o: nwg_evcb.cc nwg_evcb.h nwg_common_socket_include.h
-	$(CXX) -c nwg_evcb.cc $(CXXFLAGS)
+examples/exm_%: examples/%.cc libnwg.a
+	$(CXX) -o examples/exm_$(notdir $(basename $<)) $< $(CXXFLAGS) $(LIBS)
 
 tests/test_nwg_bytebuffer: libnwg.a tests/nwg_bytebuffer_test.cc
-	$(CXX) -I`pwd` -o tests/test_nwg_bytebuffer \
-		tests/nwg_bytebuffer_test.cc \
-		$(CXXFLAGS) $(LIBS)
+	$(CXX) -o tests/test_nwg_bytebuffer \
+		tests/nwg_bytebuffer_test.cc $(CXXFLAGS) $(LIBS)
 
 tests/test_nwg_server: libnwg.a tests/nwg_server_test.cc
-	$(CXX) -I`pwd` -o tests/test_nwg_server \
-		tests/nwg_server_test.cc \
-		$(CXXFLAGS) $(LIBS)
-
-examples/exm_echoserver: libnwg.a examples/echoserver.cc
-	$(CXX) -I`pwd` -o examples/exm_echoserver \
-		examples/echoserver.cc \
-		$(CXXFLAGS) $(LIBS)
-
-examples/exm_httpserverv1: libnwg.a examples/httpserverv1.cc
-	$(CXX) -I`pwd` -o examples/exm_httpserverv1 \
-		examples/httpserverv1.cc \
-		$(CXXFLAGS) $(LIBS)
+	$(CXX) -o tests/test_nwg_server \
+		tests/nwg_server_test.cc $(CXXFLAGS) $(LIBS)
 
 clean:
 	rm -f tests/test_*
 	rm -f examples/exm_*
-	rm -f *.o
-	rm -f *.a
+	rm -f nwg_*.o
+	rm -f libnwg.a
