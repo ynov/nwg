@@ -15,14 +15,16 @@
 #define _printf(...) fprintf (stdout, __VA_ARGS__)
 #endif
 
+static int numReq = 0;
+
 class HttpHandler : public Nwg::Handler
 {
     void sessionOpened(Nwg::Session &session)
     {
-        int req_no = ++session.getServer().get<int>("num_req");
-        session.put<int>("req_no", std::make_shared<int>(req_no));
+        int reqNo = ++numReq;
+        session.put<int>("req_no", std::make_shared<int>(reqNo));
 
-        _printf("==== SESSION OPENED #%d ====\n", req_no);
+        _printf("==== SESSION OPENED #%d ====\n", reqNo);
     }
 
     void messageReceived(Nwg::Session &session, Nwg::Object &obj)
@@ -79,10 +81,9 @@ void run()
     server.setProtocolCodec(new Nwg::BasicProtocolCodec());
     server.setHandler(new HttpHandler());
 
-    server.put<int>("num_req", std::make_shared<int>(0));
-
     printf("Listening on port %d\n", server.getPort());
     printf("Open http://127.0.0.1:%d/\n", server.getPort());
+
     server.run();
 }
 
