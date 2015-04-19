@@ -21,7 +21,8 @@ tests: libnwg.a \
 
 examples: libnwg.a \
 	examples/exm_echoserver \
-	examples/exm_httpserverv1
+	examples/exm_httpserverv1 \
+	examples/exm_httpserverv2
 
 libnwg.a: \
 	nwg_objectcontainer.o \
@@ -79,7 +80,7 @@ libboost: libboost_regex.a libboost_filesystem.a libboost_system.a
 	$(CXX) -c $< $(CXXFLAGS)
 
 examples/exm_%: examples/%.cc libnwg.a
-	$(CXX) -o examples/exm_$(notdir $(basename $<)) $< $(CXXFLAGS) $(LIBS)
+	$(CXX) -o examples/exm_$(notdir $(basename $<)) $< $(CXXFLAGS) $(LIBS) $(BOOSTLIBS)
 
 tests/test_nwg_bytebuffer: libnwg.a tests/nwg_bytebuffer_test.cc
 	$(CXX) -o tests/test_nwg_bytebuffer \
