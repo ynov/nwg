@@ -9,9 +9,10 @@
 #include <nwg_basicprotocolcodec.h>
 
 #define BUFFSIZE 32768
+#define READBUFFSIZE 2097152
 
 #ifndef SILENT
-#define SILENT 0
+#define SILENT 1
 #endif
 
 #if SILENT
@@ -32,7 +33,10 @@ static int numReq = 0;
 struct SessionState : public Nwg::Object
 {
     int reqNo = 0;
-    bool done = false;
+    size_t nwritten = 0;
+    size_t length = 0;
+    std::ifstream *is = nullptr;
+    bool readAndWriteFile = false;
 };
 
 #define PATTERN "([a-zA-Z]+) (/[0-9a-zA-Z\\-_,.;:'\"\\[\\]\\(\\)+=!@#$%^&*<>/?~`{}|]*) (HTTP/\\d\\.\\d)(\r|)$"
@@ -91,6 +95,7 @@ public:
         Nwg::ByteBuffer &out = *new Nwg::ByteBuffer(BUFFSIZE);
         path urlPath = path(absolute(current_path()).string() + url);
 
+        /* request is okay and it's a directory */
         if (requestOk && is_directory(urlPath)) {
             std::string sout;
             sout.reserve(BUFFSIZE);
@@ -126,17 +131,26 @@ public:
 
             session.write(&out);
             return;
-        } /* end of url == "/" */
+        }
+
+        /* request is okay and it's likely a regular file */
         else if (requestOk)
         {
             url = url.substr(1);
             path p(url);
 
             if (is_regular_file(p)) {
-                std::ifstream is(p.string(), std::ios::binary);
-                is.seekg (0, is.end);
-                int length = is.tellg();
-                is.seekg (0, is.beg);
+                std::ifstream *is = new std::ifstream(p.string(), std::ios::binary);
+                is->seekg(0, is->end);
+                int length = is->tellg();
+                is->seekg(0, is->beg);
+
+                state.readAndWriteFile = true;
+                state.length = length;
+                state.nwritten = 0;
+                state.is = is;
+
+                _printf("==== DATA TO BE WRITTEN: %d ====\n", out.limit());
 
                 out.put("HTTP/1.1 200 OK\r\n");
                 out.put("Content-Type: text/plain\r\n");
@@ -144,18 +158,15 @@ public:
                 out.put("Content-Length: " + std::to_string(length) + "\r\n");
                 out.put("\r\n");
 
-                char *buff = new char[length];
-                is.read(buff, length);
-                is.close();
-
-                out.put(buff, length);
-                delete []buff;
-
                 out.flip();
+
+                /* will continue reading and writing at messageSent() */
 
                 session.write(&out);
                 return;
             }
+
+            /* it's neither regular file nor directory, assume it is not found */
             else
             {
                 out.put("HTTP/1.1 404 NOT FOUND\r\n");
@@ -171,7 +182,9 @@ public:
                 session.write(&out);
                 return;
             }
-        } /* end of requestOk */
+        }
+
+        /* request is NOT okay */
         else
         {
             out.put("HTTP/1.1 400 BAD REQUEST\r\n");
@@ -193,12 +206,54 @@ public:
         Nwg::ByteBuffer &msg = dynamic_cast<Nwg::ByteBuffer &>(obj);
         SessionState &state = session.get<SessionState>("_");
 
-        session.close();
+        /* shall we continue reading and sending file? */
+        if (state.readAndWriteFile && state.nwritten < state.length)
+        {
+            /* continue what we haven't finished yet */
+            Nwg::ByteBuffer &out = *new Nwg::ByteBuffer(BUFFSIZE);
+            std::ifstream *is = state.is;
+            char buff[READBUFFSIZE];
+
+            is->read(buff, READBUFFSIZE);
+            out.put(buff, is->gcount());
+            out.flip();
+
+            state.nwritten += is->gcount();
+
+            session.write(&out);
+
+            if (state.nwritten == state.length) {
+                state.is->close();
+
+                state.readAndWriteFile = false;
+                state.length = 0;
+                state.nwritten = 0;
+                state.is = nullptr;
+
+                _printf("==== STREAM CLOSED ====\n");
+            }
+        }
+
+        /* nothing left to be written */
+        else
+        {
+            session.close();
+
+            _printf("==== DATA COMPLETELY SENT ====\n");
+        }
     }
 
     void sessionClosed(Nwg::Session &session)
     {
         SessionState &state = session.get<SessionState>("_");
+
+        /* if we are in the middle of reading and sending file */
+        if (state.readAndWriteFile) {
+            state.is->close();
+
+            _printf("==== STREAM CLOSED ====\n");
+            _printf("==== DATA NOT COMPLETELY SENT ====\n");
+        }
     }
 };
 

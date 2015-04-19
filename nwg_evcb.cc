@@ -19,10 +19,14 @@
 #define close closesocket
 #endif
 
-#if EVCBDEBUG
-#define _dprintf(...) fprintf (stdout, __VA_ARGS__)
-#else
+#ifndef SILENT
+#define SILENT 1
+#endif
+
+#if SILENT
 #define _dprintf(...)
+#else
+#define _dprintf(...) fprintf (stdout, __VA_ARGS__)
 #endif
 
 namespace Nwg
@@ -104,17 +108,18 @@ void EVCB::doRead(evutil_socket_t fd, short events, void *arg)
         delete &session;
         return;
     } else if (result < 0) {
-        bool err_not_eagain = false;
+        bool err_eagain = false;
 
 #ifdef __unix__
-        err_not_eagain = errno != EAGAIN;
+        err_eagain = errno == EAGAIN;
 #endif /* __unix__ */
 
 #ifdef _WIN32
-        err_not_eagain = WSAGetLastError() != WSAEWOULDBLOCK;
+        err_eagain = WSAGetLastError() == WSAEWOULDBLOCK;
+        errno = WSAGetLastError();
 #endif /* _W32 */
 
-        if (err_not_eagain) {
+        if (!err_eagain) {
             handler.sessionClosed(session);
 
             perror("recv()");
@@ -161,17 +166,52 @@ void EVCB::doWrite(evutil_socket_t fd, short events, void *arg)
     Handler &handler = server.getHandler();
     ByteBuffer &writeBuffer = session.getWriteBuffer();
 
-    protocolCodec.decode(&session.getWriteObject(), &writeBuffer);
-
-    std::vector<byte> b = writeBuffer.read(writeBuffer.remaining());
-    ssize_t result = send(fd, (char *) b.data(), b.size(), 0);
-
-    if (result < 0) {
-        _dprintf("D-- %40s --\n", "doWrite() :: result < 0");
-        _dprintf("DDDD-- result == %d --\n", (int) result);
-        // TODO
+    if (session.nWritten == 0) {
+        protocolCodec.decode(&session.getWriteObject(), &writeBuffer);
     }
 
+    while (session.nWritten < writeBuffer.limit()) {
+        std::vector<byte> b = writeBuffer.read(writeBuffer.remaining());
+        ssize_t result = send(fd, (char *) b.data(), b.size(), 0);
+
+        // _dprintf("DDDD-- writeBuffer.limit() = %d --\n", (int) writeBuffer.limit());
+        // _dprintf("DDDD-- b.size() = %d --\n", (int) b.size());
+        // _dprintf("DDDD-- result = %d --\n", (int) result);
+
+        if (result < 0) {
+            bool err_eagain = false;
+
+#ifdef __unix__
+            err_eagain = errno == EAGAIN;
+#endif /* __unix__ */
+
+#ifdef _WIN32
+            err_eagain = WSAGetLastError() == WSAEWOULDBLOCK;
+            errno = WSAGetLastError();
+#endif /* _W32 */
+
+            if (err_eagain) {
+                _dprintf("DDDD-- errno == EAGAIN (OK) --\n");
+                return;
+            } else {
+                _dprintf("DDDD-- errno IS NOT EAGAIN --\n");
+                return;
+            }
+        }
+
+        // _dprintf("DDDD-- session.nWritten (%d) += result (%d) --\n", session.nWritten, result);
+        session.nWritten += result;
+        // _dprintf("DDDD-- session.nWritten (%d) | limit() = %d --\n", session.nWritten, writeBuffer.limit());
+        writeBuffer.jump(session.nWritten);
+    }
+
+    if (session.nWritten != writeBuffer.limit()) {
+        _dprintf("DDDD-- it suddenly goes here... --\n");
+        _dprintf("DDDD-- session.nWritten == %d, writeBuffer.limit() == %d --\n", session.nWritten, writeBuffer.limit());
+        return;
+    }
+
+    session.nWritten = 0;
     session.resetWrite();
     handler.messageSent(session, session.getLastWriteObject());
 

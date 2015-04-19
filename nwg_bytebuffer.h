@@ -51,6 +51,8 @@ public:
 
     byte &operator[](int i);
 
+    std::vector<byte> &bsRef();
+
 private:
     int _position;
     int _limit;

@@ -42,6 +42,7 @@ public:
     bool isClosed();
     int getFd();
 
+    size_t nWritten = 0;
     struct event *readEvent = nullptr;
     struct event *writeEvent = nullptr;
 

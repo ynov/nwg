@@ -158,4 +158,9 @@ byte &ByteBuffer::operator[](int i)
     return _bs[i];
 }
 
+std::vector<byte> &ByteBuffer::bsRef()
+{
+    return _bs;
+}
+
 } /* namespace Nwg */
