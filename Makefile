@@ -1,7 +1,7 @@
 CXX=g++
 DFLAGS=
-CXXINCLUDES=-I`pwd` -I`pwd`/deps/libevent/include -I`pwd`/deps/boost
-CXXFLAGS=-O2 -g -Wall -fmessage-length=0 -std=c++11 $(CXXINCLUDES) $(DFLAGS)
+CXXINCLUDEDIR=-I`pwd` -I`pwd`/deps/libevent/include -I`pwd`/deps/boost
+CXXFLAGS=-O2 -g -Wall -fmessage-length=0 -std=c++11 $(CXXINCLUDEDIR) $(DFLAGS)
 LIBDIR=-L`pwd` -L`pwd`/deps/libevent/.libs -L`pwd`/deps/boost/stage/lib
 LIBS=$(LIBDIR) -lnwg -levent
 BOOST_BOOTSTRAP=./bootstrap.sh
@@ -13,35 +13,24 @@ ifeq ($(OS),Windows_NT)
 	BOOST_BOOTSTRAP=cmd /c "bootstrap.bat mingw"
 endif
 
-.NOTPARALLEL: libevent $(libevent_a) libboost $(libbooost_all)
+.NOTPARALLEL: libboost $(libbooost_all) libevent $(libevent_a)
 
-all: libevent \
-	libboost \
+all: libboost libevent \
 	libnwg.a \
 	tests \
 	examples
 
-tests: libevent libnwg.a \
+deps: libboost libevent
+
+tests: libnwg.a \
 	tests/test_nwg_bytebuffer \
 	tests/test_nwg_server
 
-examples: libevent libboost libnwg.a \
+examples: libnwg.a \
 	examples/exm_echoserver \
 	examples/exm_httpserverv1
 
 libevent_a=deps/libevent/.libs/libevent.a
-
-libnwg.a: $(libevent_a) \
-	nwg_objectcontainer.o \
-	nwg_object.o \
-	nwg_bytebuffer.o \
-	nwg_session.o \
-	nwg_protocolcodec.o \
-	nwg_basicprotocolcodec.o \
-	nwg_handler.o \
-	nwg_server.o \
-	nwg_evcb.o
-	ar rcs libnwg.a *.o
 
 $(libevent_a):
 	cd deps/libevent && \
@@ -65,6 +54,18 @@ $(libboost_all):
 	mv libboost_system*.a libboost_system.a
 
 libboost: $(libboost_all)
+
+libnwg.a: $(libevent_a) \
+	nwg_objectcontainer.o \
+	nwg_object.o \
+	nwg_bytebuffer.o \
+	nwg_session.o \
+	nwg_protocolcodec.o \
+	nwg_basicprotocolcodec.o \
+	nwg_handler.o \
+	nwg_server.o \
+	nwg_evcb.o
+	ar rcs libnwg.a *.o
 
 nwg_objectcontainer.o: nwg_objectcontainer.cc nwg_objectcontainer.h
 	$(CXX) -c nwg_objectcontainer.cc $(CXXFLAGS)
