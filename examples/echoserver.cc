@@ -6,23 +6,27 @@
 #define BUFFSIZE 32768
 #define MAX_CLIENT 5
 
+static int numClient = 0;
+static int lastId = 0;
+
 class EchoHandler : public Nwg::Handler
 {
     void sessionOpened(Nwg::Session &session)
     {
-        const int num_client = ++session.getServer().get<int>("num_client");
-        const int last_id = ++session.getServer().get<int>("last_id");
-        int &client_id = *new int(last_id);
+        numClient++;
+        lastId++;
 
-        printf("client #%d connected!\n", client_id);
-        printf("num_client: %d\n", num_client);
+        int &clientId = *new int(lastId);
+
+        printf("client #%d connected!\n", clientId);
+        printf("num_client: %d\n", numClient);
 
         session.put<int>("msg_received", std::make_shared<int>(1));
-        session.put<int>("client_id", &client_id);
+        session.put<int>("client_id", &clientId);
 
         Nwg::ByteBuffer &out = *new Nwg::ByteBuffer(BUFFSIZE);
 
-        if (num_client > MAX_CLIENT) {
+        if (numClient > MAX_CLIENT) {
             out.put("Client limit exceeded!\n");
             out.flip();
 
@@ -39,40 +43,39 @@ class EchoHandler : public Nwg::Handler
 
     void sessionClosed(Nwg::Session &session)
     {
-        const int num_client = --session.getServer().get<int>("num_client");
-        const int client_id = session.get<int>("client_id");
-        const int msg_received = --session.get<int>("msg_received");
+        --numClient;
 
-        printf("client #%d disconnected! # of message received: %d\n", client_id, msg_received);
-        printf("num_client: %d\n", num_client);
+        int clientId = session.get<int>("client_id");
+        int msgReceived = --session.get<int>("msg_received");
+
+        printf("client #%d disconnected! # of message received: %d\n", clientId, msgReceived);
+        printf("num_client: %d\n", numClient);
     }
 
     void messageReceived(Nwg::Session &session, Nwg::Object &obj)
     {
         Nwg::ByteBuffer &msg = dynamic_cast<Nwg::ByteBuffer &>(obj);
 
-        const int client_id = session.get<int>("client_id");
-        int &msg_received = session.get<int>("msg_received");
+        int clientId = session.get<int>("client_id");
+        int &msgReceived = session.get<int>("msg_received");
 
-        printf("client #%d >> %s\n", client_id, msg.sreadUntil('\n').c_str());
+        printf("client #%d >> %s\n", clientId, msg.sreadUntil('\n').c_str());
         msg.jump(0);
 
         Nwg::ByteBuffer &out = *new Nwg::ByteBuffer(BUFFSIZE);
-        out.put(std::to_string(msg_received) + ". >> ");
+        out.put(std::to_string(msgReceived) + ". >> ");
         out.put(msg.read(msg.remaining()));
-        out.put("\n" + std::to_string(msg_received + 1) + ". << ");
+        out.put("\n" + std::to_string(msgReceived + 1) + ". << ");
         out.flip();
 
         session.write(&out);
 
-        msg_received++;
+        msgReceived++;
     }
 
     void messageSent(Nwg::Session &session, Nwg::Object &obj)
     {
-        const int num_client = session.getServer().get<int>("num_client");
-
-        if (num_client > MAX_CLIENT) {
+        if (numClient > MAX_CLIENT) {
             session.close();
         }
     }
@@ -85,9 +88,6 @@ void run()
 
     server.setProtocolCodec(new Nwg::BasicProtocolCodec());
     server.setHandler(new EchoHandler());
-
-    server.put<int>("last_id", std::make_shared<int>(0));
-    server.put<int>("num_client", std::make_shared<int>(0));
 
     printf("Listening on port %d\n", server.getPort());
     server.run();
