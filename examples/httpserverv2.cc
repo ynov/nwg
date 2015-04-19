@@ -11,7 +11,7 @@
 #define BUFFSIZE 32768
 
 #ifndef SILENT
-#define SILENT 1
+#define SILENT 0
 #endif
 
 #if SILENT
@@ -22,14 +22,12 @@
 
 using boost::regex;
 using boost::regex_match;
+using boost::regex_replace;
 using boost::smatch;
 
 using namespace boost::filesystem;
 
-struct ServerState : public Nwg::Object
-{
-    int numReq = 0;
-};
+static int numReq = 0;
 
 struct SessionState : public Nwg::Object
 {
@@ -41,12 +39,24 @@ struct SessionState : public Nwg::Object
 
 class HttpHandler : public Nwg::Handler
 {
+private:
     static boost::regex pattern;
 
+    std::string decodeUrl(const std::string &url)
+    {
+        std::string nurl = url;
+
+        static regex reSpace("%20");
+        nurl = regex_replace(nurl, reSpace, " ");
+
+        return nurl;
+    }
+
+public:
     void sessionOpened(Nwg::Session &session)
     {
         SessionState &state = *new SessionState();
-        state.reqNo = ++session.getServer().get<ServerState>("_").numReq;
+        state.reqNo = ++numReq;
 
         session.put<SessionState>("_", &state);
     }
@@ -58,7 +68,7 @@ class HttpHandler : public Nwg::Handler
 
         std::string h1 = msg.sreadUntil('\n');
 
-        _printf("==== REQUEST RECEIVED ====\n");
+        _printf("==== REQUEST RECEIVED %d ====\n", state.reqNo);
         _printf("%s\n", h1.c_str());
 
         smatch what;
@@ -70,14 +80,17 @@ class HttpHandler : public Nwg::Handler
             _printf("URL: %s\n", what[2].str().c_str());
             _printf("HTTP Version: %s\n", what[3].str().c_str());
 
-            url = what[2].str();
+            url = decodeUrl(what[2].str());
             requestOk = true;
         } else {
-            _printf("Malformed request.\n");
+            _printf("MALFORMED REQUEST.\n");
         }
+
         _printf("==== ==== ====\n");
 
+        Nwg::ByteBuffer &out = *new Nwg::ByteBuffer(BUFFSIZE);
         path urlPath = path(absolute(current_path()).string() + url);
+
         if (requestOk && is_directory(urlPath)) {
             std::string sout;
             sout.reserve(BUFFSIZE);
@@ -99,7 +112,6 @@ class HttpHandler : public Nwg::Handler
                 }
             }
 
-            Nwg::ByteBuffer &out = *new Nwg::ByteBuffer(BUFFSIZE);
             out.put("HTTP/1.1 200 OK\r\n");
             out.put("Content-Type: text/html\r\n");
             out.put("Connection: close\r\n");
@@ -115,7 +127,8 @@ class HttpHandler : public Nwg::Handler
             session.write(&out);
             return;
         } /* end of url == "/" */
-        else if (requestOk) {
+        else if (requestOk)
+        {
             url = url.substr(1);
             path p(url);
 
@@ -125,7 +138,6 @@ class HttpHandler : public Nwg::Handler
                 int length = is.tellg();
                 is.seekg (0, is.beg);
 
-                Nwg::ByteBuffer &out = *new Nwg::ByteBuffer(BUFFSIZE);
                 out.put("HTTP/1.1 200 OK\r\n");
                 out.put("Content-Type: text/plain\r\n");
                 out.put("Connection: close\r\n");
@@ -143,8 +155,9 @@ class HttpHandler : public Nwg::Handler
 
                 session.write(&out);
                 return;
-            } else {
-                Nwg::ByteBuffer &out = *new Nwg::ByteBuffer(BUFFSIZE);
+            }
+            else
+            {
                 out.put("HTTP/1.1 404 NOT FOUND\r\n");
                 out.put("Content-Type: text/html\r\n");
                 out.put("Connection: close\r\n");
@@ -159,8 +172,8 @@ class HttpHandler : public Nwg::Handler
                 return;
             }
         } /* end of requestOk */
-        else {
-            Nwg::ByteBuffer &out = *new Nwg::ByteBuffer(BUFFSIZE);
+        else
+        {
             out.put("HTTP/1.1 400 BAD REQUEST\r\n");
             out.put("Content-Type: text/html\r\n");
             out.put("Connection: close\r\n");
@@ -191,23 +204,28 @@ class HttpHandler : public Nwg::Handler
 
 boost::regex HttpHandler::pattern = boost::regex(PATTERN);
 
-void run()
+void run(int port)
 {
-    Nwg::Server server(8840);
+    Nwg::Server server(port);
     server.setBuffSize(BUFFSIZE);
 
     server.setProtocolCodec(new Nwg::BasicProtocolCodec());
     server.setHandler(new HttpHandler());
 
-    server.put<ServerState>("_", std::make_shared<ServerState>());
-
     printf("Listening on port %d\n", server.getPort());
     printf("Open http://127.0.0.1:%d/\n", server.getPort());
+
     server.run();
 }
 
-int main()
+int main(int argc, char **argv)
 {
-    run();
+    int port = 8840;
+
+    if (argc > 1) {
+        port = std::stoi(argv[1]);
+    }
+
+    run(port);
     return 0;
 }
