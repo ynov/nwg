@@ -224,6 +224,7 @@ public:
 
             if (state.nwritten == state.length) {
                 state.is->close();
+                delete state.is;
 
                 state.readAndWriteFile = false;
                 state.length = 0;
@@ -250,6 +251,7 @@ public:
         /* if we are in the middle of reading and sending file */
         if (state.readAndWriteFile) {
             state.is->close();
+            delete state.is;
 
             _printf("==== STREAM CLOSED ====\n");
             _printf("==== DATA NOT COMPLETELY SENT ====\n");
