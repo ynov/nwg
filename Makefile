@@ -49,9 +49,9 @@ $(libboost_all):
 	$(BOOST_BOOTSTRAP) && \
 	./b2 --with-regex --with-filesystem link=static threading=single variant=release toolset=gcc &&\
 	cd stage/lib && \
-	mv libboost_regex*.a libboost_regex.a && \
-	mv libboost_filesystem*.a libboost_filesystem.a && \
-	mv libboost_system*.a libboost_system.a
+	if [ ! -e libboost_regex.a ]; then mv -f libboost_regex*.a libboost_regex.a; fi && \
+	if [ ! -e libboost_filesystem.a ]; then mv -f libboost_filesystem*.a libboost_filesystem.a; fi && \
+	if [ ! -e libboost_system.a ]; then mv -f libboost_system*.a libboost_system.a; fi
 
 libboost: $(libboost_all)
 
