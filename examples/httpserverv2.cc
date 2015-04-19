@@ -9,7 +9,7 @@
 #include <nwg_basicprotocolcodec.h>
 
 #define BUFFSIZE 32768
-#define READBUFFSIZE 2097152
+#define READBUFFSIZE 16777216 /* 16MB */
 
 #ifndef SILENT
 #define SILENT 1
@@ -212,7 +212,7 @@ public:
             /* continue what we haven't finished yet */
             Nwg::ByteBuffer &out = *new Nwg::ByteBuffer(BUFFSIZE);
             std::ifstream *is = state.is;
-            char buff[READBUFFSIZE];
+            char *buff = new char[READBUFFSIZE];
 
             is->read(buff, READBUFFSIZE);
             out.put(buff, is->gcount());
@@ -221,6 +221,7 @@ public:
             state.nwritten += is->gcount();
 
             session.write(&out);
+            delete buff;
 
             if (state.nwritten == state.length) {
                 state.is->close();
