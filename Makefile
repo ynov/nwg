@@ -13,6 +13,8 @@ ifeq ($(OS),Windows_NT)
 	BOOST_BOOTSTRAP=cmd /c "bootstrap.bat mingw"
 endif
 
+.NOTPARALLEL: libevent $(libevent_a) libboost $(libbooost_all)
+
 all: libevent \
 	libboost \
 	libnwg.a \
@@ -64,31 +66,31 @@ $(libboost_all):
 
 libboost: $(libboost_all)
 
-nwg_objectcontainer.o: nwg_objectcontainer.cc nwg_objectcontainer.h $(libevent_a)
+nwg_objectcontainer.o: nwg_objectcontainer.cc nwg_objectcontainer.h
 	$(CXX) -c nwg_objectcontainer.cc $(CXXFLAGS)
 
-nwg_object.o: nwg_object.cc nwg_object.h $(libevent_a)
+nwg_object.o: nwg_object.cc nwg_object.h
 	$(CXX) -c nwg_object.cc $(CXXFLAGS)
 
-nwg_bytebuffer.o: nwg_bytebuffer.cc nwg_bytebuffer.h $(libevent_a)
+nwg_bytebuffer.o: nwg_bytebuffer.cc nwg_bytebuffer.h
 	$(CXX) -c nwg_bytebuffer.cc $(CXXFLAGS)
 
-nwg_session.o: nwg_session.cc nwg_session.h $(libevent_a)
+nwg_session.o: nwg_session.cc nwg_session.h
 	$(CXX) -c nwg_session.cc $(CXXFLAGS)
 
-nwg_protocolcodec.o: nwg_protocolcodec.cc nwg_protocolcodec.h $(libevent_a)
+nwg_protocolcodec.o: nwg_protocolcodec.cc nwg_protocolcodec.h
 	$(CXX) -c nwg_protocolcodec.cc $(CXXFLAGS)
 
-nwg_basicprotocolcodec.o: nwg_basicprotocolcodec.cc nwg_basicprotocolcodec.h $(libevent_a)
+nwg_basicprotocolcodec.o: nwg_basicprotocolcodec.cc nwg_basicprotocolcodec.h
 	$(CXX) -c nwg_basicprotocolcodec.cc $(CXXFLAGS)
 
 nwg_handler.o: nwg_handler.cc nwg_handler.h $(libevent_a)
 	$(CXX) -c nwg_handler.cc $(CXXFLAGS)
 
-nwg_server.o: nwg_server.cc nwg_server.h nwg_common_socket_include.h $(libevent_a)
+nwg_server.o: nwg_server.cc nwg_server.h nwg_common_socket_include.h
 	$(CXX) -c nwg_server.cc $(CXXFLAGS)
 
-nwg_evcb.o: nwg_evcb.cc nwg_evcb.h nwg_common_socket_include.h $(libevent_a)
+nwg_evcb.o: nwg_evcb.cc nwg_evcb.h nwg_common_socket_include.h
 	$(CXX) -c nwg_evcb.cc $(CXXFLAGS)
 
 tests/test_nwg_bytebuffer: libnwg.a tests/nwg_bytebuffer_test.cc
