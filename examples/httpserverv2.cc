@@ -221,7 +221,7 @@ public:
             state.nwritten += is->gcount();
 
             session.write(&out);
-            delete buff;
+            delete []buff;
 
             if (state.nwritten == state.length) {
                 state.is->close();
