@@ -23,8 +23,8 @@ public:
     Server(int port);
     virtual ~Server();
 
-    void setProtocolCodec(ProtocolCodec *_protocolCodec);
-    void setHandler(Handler *_handler);
+    void setProtocolCodec(const std::shared_ptr<ProtocolCodec> &protocolCodec);
+    void setHandler(const std::shared_ptr<Handler> &handler);
 
     Handler &getHandler();
     ProtocolCodec &getProtocolCodec();

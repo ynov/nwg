@@ -25,8 +25,8 @@ public:
     void reset();
     void flip();
     int remaining();
-    int position();
-    int limit();
+    size_t position();
+    size_t limit();
 
     void put(byte b);
     void put(const char *b, int size);
@@ -54,8 +54,8 @@ public:
     std::vector<byte> &bsRef();
 
 private:
-    int _position;
-    int _limit;
+    size_t _position;
+    size_t _limit;
     std::vector<byte> _bs;
 };
 

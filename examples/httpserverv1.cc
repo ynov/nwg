@@ -15,6 +15,8 @@
 #define _printf(...) fprintf (stdout, __VA_ARGS__)
 #endif
 
+#define GETMSG(obj) dynamic_cast<Nwg::ByteBuffer &>(obj)
+
 static int numReq = 0;
 
 class HttpHandler : public Nwg::Handler
@@ -29,37 +31,37 @@ class HttpHandler : public Nwg::Handler
 
     void messageReceived(Nwg::Session &session, Nwg::Object &obj)
     {
-        Nwg::ByteBuffer &msg = dynamic_cast<Nwg::ByteBuffer &>(obj);
+        Nwg::ByteBuffer &msg = GETMSG(obj);
+        std::shared_ptr<Nwg::ByteBuffer> out(new Nwg::ByteBuffer(BUFFSIZE));
 
         _printf("==== REQUEST RECEIVED ====\n");
         _printf("%s\n", msg.sread(msg.remaining()).c_str());
 
-        Nwg::ByteBuffer &out = *new Nwg::ByteBuffer(BUFFSIZE);
-        out.put("HTTP/1.1 200 OK\r\n");
-        out.put("Content-Type: text/html\r\n");
-        out.put("Connection: close\r\n");
-        out.put("\r\n");
+        out->put("HTTP/1.1 200 OK\r\n");
+        out->put("Content-Type: text/html\r\n");
+        out->put("Connection: close\r\n");
+        out->put("\r\n");
 
-        out.put("<!DOCTYPE html>\n");
-        out.put("<html>\n");
-        out.put("<head>\n");
-        out.put("    <meta charset=\"utf-8\"/>\n");
-        out.put("    <title>nwg &raquo; examples &raquo; httpserverv1</title>\n");
-        out.put("</head>\n");
-        out.put("<body>\n");
-        out.put("    <h1>The quick brown fox jumps over the lazy dog.</h1>\n");
-        out.put("    <pre>request #" + std::to_string(session.get<int>("req_no")) + "</pre>\n");
-        out.put("</body>\n");
-        out.put("</html>\n");
+        out->put("<!DOCTYPE html>\n");
+        out->put("<html>\n");
+        out->put("<head>\n");
+        out->put("    <meta charset=\"utf-8\"/>\n");
+        out->put("    <title>nwg &raquo; examples &raquo; httpserverv1</title>\n");
+        out->put("</head>\n");
+        out->put("<body>\n");
+        out->put("    <h1>The quick brown fox jumps over the lazy dog.</h1>\n");
+        out->put("    <pre>request #" + std::to_string(session.get<int>("req_no")) + "</pre>\n");
+        out->put("</body>\n");
+        out->put("</html>\n");
 
-        out.flip();
+        out->flip();
 
-        session.write(&out);
+        session.write(out);
     }
 
     void messageSent(Nwg::Session &session, Nwg::Object &obj)
     {
-        Nwg::ByteBuffer &msg = dynamic_cast<Nwg::ByteBuffer &>(obj);
+        Nwg::ByteBuffer &msg = GETMSG(obj);
 
         _printf("==== RESPONSE SENT ====\n");
         _printf("%s\n", msg.sread(msg.remaining()).c_str());
@@ -78,8 +80,8 @@ void run()
     Nwg::Server server(8840);
     server.setBuffSize(BUFFSIZE);
 
-    server.setProtocolCodec(new Nwg::BasicProtocolCodec());
-    server.setHandler(new HttpHandler());
+    server.setProtocolCodec(std::make_shared<Nwg::BasicProtocolCodec>());
+    server.setHandler(std::make_shared<HttpHandler>());
 
     printf("Listening on port %d\n", server.getPort());
     printf("Open http://127.0.0.1:%d/\n", server.getPort());

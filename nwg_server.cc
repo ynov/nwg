@@ -21,14 +21,14 @@ Server::~Server()
     _handler.reset();
 }
 
-void Server::setProtocolCodec(ProtocolCodec *protocolCodec)
+void Server::setProtocolCodec(const std::shared_ptr<ProtocolCodec> &protocolCodec)
 {
-    _protocolCodec = std::shared_ptr<ProtocolCodec>(protocolCodec);
+    _protocolCodec = protocolCodec;
 }
 
-void Server::setHandler(Handler *handler)
+void Server::setHandler(const std::shared_ptr<Handler> &handler)
 {
-    _handler = std::shared_ptr<Handler>(handler);
+    _handler = handler;
 }
 
 ProtocolCodec &Server::getProtocolCodec()

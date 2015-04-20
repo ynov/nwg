@@ -23,8 +23,8 @@ void ByteBuffer::jump(int n) { _position = n; }
 void ByteBuffer::reset() { _limit = 0; _position = 0; }
 void ByteBuffer::flip() { _limit = _position; _position = 0; }
 int ByteBuffer::remaining() { return _limit - _position; }
-int ByteBuffer::position() { return _position; }
-int ByteBuffer::limit() { return _limit; }
+size_t ByteBuffer::position() { return _position; }
+size_t ByteBuffer::limit() { return _limit; }
 
 void ByteBuffer::put(byte b)
 {

@@ -39,8 +39,8 @@ void EVCB::doAccept(evutil_socket_t listener, short event, void *arg)
     ListenerEventArg &listenerEventArg = *(ListenerEventArg *) arg;
 
     struct event_base *base = listenerEventArg.base;
-    Server &server = *listenerEventArg.server;
-    Handler &handler = server.getHandler();
+    Server &server          = *listenerEventArg.server;
+    Handler &handler        = server.getHandler();
 
     struct sockaddr_storage ss;
     socklen_t slen = sizeof(ss);
@@ -53,25 +53,25 @@ void EVCB::doAccept(evutil_socket_t listener, short event, void *arg)
     } else {
         evutil_make_socket_nonblocking(fd);
 
-        Session &session = *new Session(server.getBuffSize(), base, fd, &server);
-        session.resetWrite();
+        Session *session = new Session(server.getBuffSize(), base, fd, &server);
+        session->resetWrite();
 
-        handler.sessionOpened(session);
+        handler.sessionOpened(*session);
 
-        if (session.isClosed()) {
+        if (session->isClosed()) {
             close(fd);
 
-            handler.sessionClosed(session);
+            handler.sessionClosed(*session);
 
             _dprintf("D-- %40s --\n", "doAccept() OUT (closed)");
-            delete &session;
+            delete session;
             return;
         }
 
-        if (session.isWriteObjectPresent()) {
-            event_add(session.writeEvent, NULL);
+        if (session->isWriteObjectPresent()) {
+            event_add(session->writeEvent, NULL);
         } else {
-            event_add(session.readEvent, NULL);
+            event_add(session->readEvent, NULL);
         }
     }
 
@@ -82,12 +82,13 @@ void EVCB::doRead(evutil_socket_t fd, short events, void *arg)
 {
     _dprintf("D-- %40s --\n", "doRead() IN");
 
-    Session &session = *((Session *) arg);
-    Server &server = session.getServer();
+    Session *session = (Session *) arg;
+
+    Server &server               = session->getServer();
     ProtocolCodec &protocolCodec = server.getProtocolCodec();
-    Handler &handler = server.getHandler();
-    ByteBuffer &readBuffer = session.getReadBuffer();
-    ByteBuffer &writeBuffer = session.getWriteBuffer();
+    Handler &handler             = server.getHandler();
+    ByteBuffer &readBuffer       = session->getReadBuffer();
+    ByteBuffer &writeBuffer      = session->getWriteBuffer();
 
     char buf[SMALL_BUFFSIZE];
     ssize_t result;
@@ -102,10 +103,10 @@ void EVCB::doRead(evutil_socket_t fd, short events, void *arg)
     readBuffer.flip();
 
     if (result == 0) {
-        handler.sessionClosed(session);
+        handler.sessionClosed(*session);
 
         _dprintf("D-- %40s --\n", "doRead() OUT (closed, result == 0)");
-        delete &session;
+        delete session;
         return;
     } else if (result < 0) {
         bool err_eagain = false;
@@ -120,37 +121,37 @@ void EVCB::doRead(evutil_socket_t fd, short events, void *arg)
 #endif /* _W32 */
 
         if (!err_eagain) {
-            handler.sessionClosed(session);
+            handler.sessionClosed(*session);
 
             perror("recv()");
 
             _dprintf("D-- %40s --\n", "doRead() OUT (closed, err_not_eagain)");
-            _dprintf("DDDD-- errno == %d --\n", errno);
-            delete &session;
+            _dprintf("DDDD-- errno == %d\n", errno);
+            delete session;
             return;
         }
     }
 
     Nwg::ObjectContainer oc;
-    protocolCodec.encode(&session.getReadBuffer(), &oc);
+    protocolCodec.encode(&session->getReadBuffer(), &oc);
 
-    session.resetWrite();
-    handler.messageReceived(session, oc.getObject());
+    session->resetWrite();
+    handler.messageReceived(*session, oc.getObject());
 
-    if (session.isClosed()) {
-        event_del(session.readEvent);
+    if (session->isClosed()) {
+        event_del(session->readEvent);
 
         close(fd);
 
-        handler.sessionClosed(session);
+        handler.sessionClosed(*session);
 
         _dprintf("D-- %40s --\n", "doRead() OUT (closed)");
-        delete &session;
+        delete session;
         return;
     }
 
-    if (session.isWriteObjectPresent()) {
-        event_add(session.writeEvent, NULL);
+    if (session->isWriteObjectPresent()) {
+        event_add(session->writeEvent, NULL);
     }
 
     _dprintf("D-- %40s --\n", "doRead() OUT");
@@ -160,17 +161,18 @@ void EVCB::doWrite(evutil_socket_t fd, short events, void *arg)
 {
     _dprintf("D-- %40s --\n", "doWrite() IN");
 
-    Session &session = *((Session *) arg);
-    Server &server = session.getServer();
-    ProtocolCodec &protocolCodec = server.getProtocolCodec();
-    Handler &handler = server.getHandler();
-    ByteBuffer &writeBuffer = session.getWriteBuffer();
+    Session *session = (Session *) arg;
 
-    if (session.nWritten == 0) {
-        protocolCodec.decode(&session.getWriteObject(), &writeBuffer);
+    Server &server               = session->getServer();
+    ProtocolCodec &protocolCodec = server.getProtocolCodec();
+    Handler &handler             = server.getHandler();
+    ByteBuffer &writeBuffer      = session->getWriteBuffer();
+
+    if (session->nWritten == 0) {
+        protocolCodec.decode(&session->getWriteObject(), &writeBuffer);
     }
 
-    while (session.nWritten < writeBuffer.limit()) {
+    while (session->nWritten < writeBuffer.limit()) {
         std::vector<byte> b = writeBuffer.read(writeBuffer.remaining());
         ssize_t result = send(fd, (char *) b.data(), b.size(), 0);
 
@@ -191,45 +193,46 @@ void EVCB::doWrite(evutil_socket_t fd, short events, void *arg)
 #endif /* _W32 */
 
             if (err_eagain) {
-                _dprintf("DDDD-- errno == EAGAIN (OK) --\n");
+                _dprintf("DDDD-- errno == EAGAIN (OK)\n");
                 return;
             } else {
-                _dprintf("DDDD-- errno IS NOT EAGAIN --\n");
+                _dprintf("DDDD-- errno IS NOT EAGAIN\n");
                 return;
             }
         }
 
         // _dprintf("DDDD-- session.nWritten (%d) += result (%d) --\n", session.nWritten, result);
-        session.nWritten += result;
+        session->nWritten += result;
         // _dprintf("DDDD-- session.nWritten (%d) | limit() = %d --\n", session.nWritten, writeBuffer.limit());
-        writeBuffer.jump(session.nWritten);
+        writeBuffer.jump(session->nWritten);
     }
 
-    if (session.nWritten != writeBuffer.limit()) {
-        _dprintf("DDDD-- it suddenly goes here... --\n");
-        _dprintf("DDDD-- session.nWritten == %d, writeBuffer.limit() == %d --\n", session.nWritten, writeBuffer.limit());
+    if (session->nWritten != writeBuffer.limit()) {
+        _dprintf("DDDD-- it suddenly goes here...\n");
+        _dprintf("DDDD-- session.nWritten == %d, writeBuffer.limit() == %d\n", session.nWritten, writeBuffer.limit());
         return;
     }
 
-    session.nWritten = 0;
-    session.resetWrite();
-    handler.messageSent(session, session.getLastWriteObject());
+    session->nWritten = 0;
 
-    if (session.isClosed()) {
-        event_del(session.writeEvent);
+    session->resetWrite();
+    handler.messageSent(*session, session->getLastWriteObject());
+
+    if (session->isClosed()) {
+        event_del(session->writeEvent);
 
         close(fd);
 
-        handler.sessionClosed(session);
+        handler.sessionClosed(*session);
 
         _dprintf("D-- %40s --\n", "doWrite() OUT (closed)");
-        delete &session;
+        delete session;
         return;
     }
 
-    if (!session.isWriteObjectPresent()) {
-        event_del(session.writeEvent);
-        event_add(session.readEvent, NULL);
+    if (!session->isWriteObjectPresent()) {
+        event_del(session->writeEvent);
+        event_add(session->readEvent, NULL);
     }
 
     _dprintf("D-- %40s --\n", "doWrite() OUT");

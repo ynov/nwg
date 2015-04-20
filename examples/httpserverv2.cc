@@ -29,15 +29,19 @@ using boost::smatch;
 using namespace boost::filesystem;
 
 static int numReq = 0;
+static const path workingPath = absolute(current_path());
 
-struct SessionState : public Nwg::Object
-{
-    int reqNo = 0;
-    size_t nwritten = 0;
-    size_t length = 0;
-    std::ifstream *is = nullptr;
+struct SessionState : public Nwg::Object {
+    int reqNo             = 0;
+    size_t nwritten       = 0;
+    size_t length         = 0;
+    std::ifstream *is     = nullptr;
     bool readAndWriteFile = false;
 };
+
+#define STATE "STATE"
+#define GETMSG(obj) dynamic_cast<Nwg::ByteBuffer &>(obj)
+#define GETSTATE(session) session.get<SessionState>(STATE)
 
 #define PATTERN "([a-zA-Z]+) (/[0-9a-zA-Z\\-_,.;:'\"\\[\\]\\(\\)+=!@#$%^&*<>/?~`{}|]*) (HTTP/\\d\\.\\d)(\r|)$"
 
@@ -59,16 +63,18 @@ private:
 public:
     void sessionOpened(Nwg::Session &session)
     {
-        SessionState &state = *new SessionState();
-        state.reqNo = ++numReq;
+        std::shared_ptr<SessionState> state(new SessionState());
+        state->reqNo = ++numReq;
 
-        session.put<SessionState>("_", &state);
+        session.put<SessionState>(STATE, state);
     }
 
     void messageReceived(Nwg::Session &session, Nwg::Object &obj)
     {
-        Nwg::ByteBuffer &msg = dynamic_cast<Nwg::ByteBuffer &>(obj);
-        SessionState &state = session.get<SessionState>("_");
+        Nwg::ByteBuffer &msg = GETMSG(obj);
+        SessionState &state  = GETSTATE(session);
+
+        std::shared_ptr<Nwg::ByteBuffer> out(new Nwg::ByteBuffer(BUFFSIZE));
 
         std::string h1 = msg.sreadUntil('\n');
 
@@ -92,11 +98,11 @@ public:
 
         _printf("==== ==== ====\n");
 
-        Nwg::ByteBuffer &out = *new Nwg::ByteBuffer(BUFFSIZE);
-        path urlPath = path(absolute(current_path()).string() + url);
+        path urlPath = workingPath;
+        urlPath += url;
 
-        /* request is okay and it's a directory */
-        if (requestOk && is_directory(urlPath)) {
+        /* request is okay and it is a directory */
+        if (requestOk && is_directory(urlPath) && (url.find("..") == -1)) {
             std::string sout;
             sout.reserve(BUFFSIZE);
 
@@ -110,30 +116,30 @@ public:
 
                 for (vec::const_iterator it(v.begin()), it_end(v.end()); it != it_end; ++it) {
                     if (is_directory(*it)) {
-                        sout += "  <li><a href=\"" + (*it).filename().string() + "/\">" + (*it).filename().string() + "/</li>\n";
+                        sout += "  <li><a href=\"" + it->filename().string() + "/\">" + it->filename().string() + "/</li>\n";
                     } else {
-                        sout += "  <li><a href=\"" + (*it).filename().string() + "\">" + (*it).filename().string() + "</li>\n";
+                        sout += "  <li><a href=\"" + it->filename().string() + "\">" + it->filename().string() + "</li>\n";
                     }
                 }
             }
 
-            out.put("HTTP/1.1 200 OK\r\n");
-            out.put("Content-Type: text/html\r\n");
-            out.put("Connection: close\r\n");
-            out.put("\r\n");
+            out->put("HTTP/1.1 200 OK\r\n");
+            out->put("Content-Type: text/html\r\n");
+            out->put("Connection: close\r\n");
+            out->put("\r\n");
 
-            out.put("<h1>Listing of " + urlPath.string() + "</h1>\n");
-            out.put("<ul>\n");
-            out.put(sout);
-            out.put("</ul>\n");
+            out->put("<h1>Listing of " + urlPath.string() + "</h1>\n");
+            out->put("<ul>\n");
+            out->put(sout);
+            out->put("</ul>\n");
 
-            out.flip();
+            out->flip();
 
-            session.write(&out);
+            session.write(out);
             return;
         }
 
-        /* request is okay and it's likely a regular file */
+        /* request is okay and it is likely a regular file */
         else if (requestOk)
         {
             url = url.substr(1);
@@ -152,34 +158,35 @@ public:
 
                 _printf("==== DATA TO BE WRITTEN: %d ====\n", out.limit());
 
-                out.put("HTTP/1.1 200 OK\r\n");
-                out.put("Content-Type: text/plain\r\n");
-                out.put("Connection: close\r\n");
-                out.put("Content-Length: " + std::to_string(length) + "\r\n");
-                out.put("\r\n");
+                out->put("HTTP/1.1 200 OK\r\n");
+                out->put("Content-Type: text/plain\r\n");
+                out->put("Connection: close\r\n");
+                out->put("Content-Length: " + std::to_string(length) + "\r\n");
+                out->put("\r\n");
 
-                out.flip();
+                out->flip();
 
-                /* will continue reading and writing at messageSent() */
+                /* send the header first */
+                /* will continue reading the file and sending it at messageSent() */
 
-                session.write(&out);
+                session.write(out);
                 return;
             }
 
-            /* it's neither regular file nor directory, assume it is not found */
+            /* neither regular file nor directory, let's assume it is not found */
             else
             {
-                out.put("HTTP/1.1 404 NOT FOUND\r\n");
-                out.put("Content-Type: text/html\r\n");
-                out.put("Connection: close\r\n");
-                out.put("\r\n");
+                out->put("HTTP/1.1 404 NOT FOUND\r\n");
+                out->put("Content-Type: text/html\r\n");
+                out->put("Connection: close\r\n");
+                out->put("\r\n");
 
-                out.put("<h1>404 NOT FOUND</h1>\n");
-                out.put("<pre>" + url + "</pre>\n");
+                out->put("<h1>404 NOT FOUND</h1>\n");
+                out->put("<pre>" + url + "</pre>\n");
 
-                out.flip();
+                out->flip();
 
-                session.write(&out);
+                session.write(out);
                 return;
             }
         }
@@ -187,75 +194,75 @@ public:
         /* request is NOT okay */
         else
         {
-            out.put("HTTP/1.1 400 BAD REQUEST\r\n");
-            out.put("Content-Type: text/html\r\n");
-            out.put("Connection: close\r\n");
-            out.put("\r\n");
+            out->put("HTTP/1.1 400 BAD REQUEST\r\n");
+            out->put("Content-Type: text/html\r\n");
+            out->put("Connection: close\r\n");
+            out->put("\r\n");
 
-            out.put("<h1>400 BAD REQUEST</h1>\n");
+            out->put("<h1>400 BAD REQUEST</h1>\n");
 
-            out.flip();
+            out->flip();
 
-            session.write(&out);
+            session.write(out);
             return;
         }
     }
 
     void messageSent(Nwg::Session &session, Nwg::Object &obj)
     {
-        Nwg::ByteBuffer &msg = dynamic_cast<Nwg::ByteBuffer &>(obj);
-        SessionState &state = session.get<SessionState>("_");
+        Nwg::ByteBuffer &msg = GETMSG(obj);
+        SessionState &state  = GETSTATE(session);
 
-        /* shall we continue reading and sending file? */
         if (state.readAndWriteFile && state.nwritten < state.length)
         {
-            /* continue what we haven't finished yet */
-            Nwg::ByteBuffer &out = *new Nwg::ByteBuffer(BUFFSIZE);
-            std::ifstream *is = state.is;
-            char *buff = new char[READBUFFSIZE];
+            /* continue reading file and sending it chunk by chunk @READBUFFSIZE */
 
-            is->read(buff, READBUFFSIZE);
-            out.put(buff, is->gcount());
-            out.flip();
+            std::shared_ptr<Nwg::ByteBuffer> out(new Nwg::ByteBuffer(BUFFSIZE));
+
+            std::ifstream *is = state.is;
+            std::unique_ptr<char> buff(new char[READBUFFSIZE]);
+
+            is->read(&*buff, READBUFFSIZE);
+            out->put(&*buff, is->gcount());
+            out->flip();
 
             state.nwritten += is->gcount();
 
-            session.write(&out);
-            delete []buff;
+            session.write(out);
 
             if (state.nwritten == state.length) {
                 state.is->close();
+                state.is = nullptr;
                 delete state.is;
 
                 state.readAndWriteFile = false;
                 state.length = 0;
                 state.nwritten = 0;
-                state.is = nullptr;
 
                 _printf("==== STREAM CLOSED ====\n");
             }
         }
 
-        /* nothing left to be written */
+        /* there is nothing left to be written */
         else
         {
             session.close();
 
-            _printf("==== DATA COMPLETELY SENT ====\n");
+            _printf("==== DATA IS COMPLETELY SENT ====\n");
         }
     }
 
     void sessionClosed(Nwg::Session &session)
     {
-        SessionState &state = session.get<SessionState>("_");
+        SessionState &state = GETSTATE(session);
 
-        /* if we are in the middle of reading and sending file */
         if (state.readAndWriteFile) {
             state.is->close();
+            state.is = nullptr;
             delete state.is;
 
             _printf("==== STREAM CLOSED ====\n");
-            _printf("==== DATA NOT COMPLETELY SENT ====\n");
+            _printf("==== DATA IS NOT COMPLETELY SENT ====\n");
         }
     }
 };
@@ -267,8 +274,8 @@ void run(int port)
     Nwg::Server server(port);
     server.setBuffSize(BUFFSIZE);
 
-    server.setProtocolCodec(new Nwg::BasicProtocolCodec());
-    server.setHandler(new HttpHandler());
+    server.setProtocolCodec(std::make_shared<Nwg::BasicProtocolCodec>());
+    server.setHandler(std::make_shared<HttpHandler>());
 
     printf("Listening on port %d\n", server.getPort());
     printf("Open http://127.0.0.1:%d/\n", server.getPort());

@@ -34,19 +34,22 @@ Session::Session(int bufferAllocationSize,
 
 Session::~Session()
 {
-    if (readEvent != nullptr)
+    if (readEvent != nullptr) {
         event_free(readEvent);
-    if (writeEvent != nullptr)
+    }
+
+    if (writeEvent != nullptr) {
         event_free(writeEvent);
+    }
 
     for (auto &_ : _vars) {
         _.second.reset();
     }
 }
 
-void Session::write(Object *obj)
+void Session::write(const std::shared_ptr<Object> &obj)
 {
-    _writeObject = std::shared_ptr<Object>(obj);
+    _writeObject = obj;
 }
 
 void Session::close()

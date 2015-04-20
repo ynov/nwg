@@ -14,7 +14,7 @@ class DummyHandler : public Nwg::Handler
         Nwg::ByteBuffer &b = dynamic_cast<Nwg::ByteBuffer &>(message);
         printf("In Message: %s\n", b.sread(b.remaining()).c_str());
 
-        Nwg::ByteBuffer *out = new Nwg::ByteBuffer(session.getBufferAllocationSize());
+        std::shared_ptr<Nwg::ByteBuffer> out(new Nwg::ByteBuffer(session.getBufferAllocationSize()));
         out->put("Grumpy wizards make toxic brew for the evil queen and jack.");
         out->flip();
 
@@ -64,8 +64,8 @@ void test_dummy()
     DummyServer server;
     server.setBuffSize(BUFFSIZE);
 
-    server.setProtocolCodec(new Nwg::BasicProtocolCodec());
-    server.setHandler(new DummyHandler());
+    server.setProtocolCodec(std::make_shared<Nwg::BasicProtocolCodec>());
+    server.setHandler(std::make_shared<DummyHandler>());
 
     server.wtf();
 

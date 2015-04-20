@@ -24,7 +24,7 @@ public:
             Server *server);
     virtual ~Session();
 
-    void write(Object *obj);
+    void write(const std::shared_ptr<Object> &obj);
     void close();
 
     int getBufferAllocationSize();
@@ -47,15 +47,9 @@ public:
     struct event *writeEvent = nullptr;
 
     template<class T>
-    void put(const std::string &key, std::shared_ptr<T> val)
+    void put(const std::string &key, const std::shared_ptr<T> &val)
     {
         _vars[key] = val;
-    }
-
-    template<class T>
-    void put(const std::string &key, T *val)
-    {
-        _vars[key] = std::shared_ptr<T>(val);
     }
 
     template<class T>
@@ -65,9 +59,9 @@ public:
     }
 
     template<class T>
-    T *getPtr(const std::string &key)
+    std::shared_ptr<T> &getPtr(const std::string &key)
     {
-        return (T *) _vars[key].get();
+        return std::static_pointer_cast<T>(_vars[key]);
     }
 
 private:
