@@ -68,7 +68,6 @@ int main(int argc, char **argv)
         printf("0x00 0xf0 = 0x%02x 0x%02x\n", bt[2], bt[3]);
 
         printf("bbuf.ssize() | 4 = %d\n", bbuf.ssize());
-        printf("obj.ssize() | 4 = %d\n", obj.ssize());
         printf("\n");
     } while(0);
 

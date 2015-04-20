@@ -11,7 +11,6 @@ class Object
 public:
     Object();
     virtual ~Object();
-    virtual int ssize();
 };
 
 } /* namespace Nwg */
