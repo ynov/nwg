@@ -220,14 +220,15 @@ public:
             std::shared_ptr<Nwg::ByteBuffer> out(new Nwg::ByteBuffer(BUFFSIZE));
 
             std::ifstream *is = state.is;
-            std::unique_ptr<char> buff(new char[READBUFFSIZE]);
+            char *buff = new char[READBUFFSIZE];
 
-            is->read(&*buff, READBUFFSIZE);
-            out->put(&*buff, is->gcount());
+            is->read(buff, READBUFFSIZE);
+            out->put(buff, is->gcount());
             out->flip();
 
-            state.nwritten += is->gcount();
+            delete [] buff;
 
+            state.nwritten += is->gcount();
             session.write(out);
 
             if (state.nwritten == state.length) {
