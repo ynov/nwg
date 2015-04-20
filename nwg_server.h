@@ -37,30 +37,6 @@ public:
 
     void run();
 
-    template<class T>
-    void put(const std::string &key, std::shared_ptr<T> val)
-    {
-        _vars[key] = val;
-    }
-
-    template<class T>
-    void put(const std::string &key, T *val)
-    {
-        _vars[key] = std::shared_ptr<T>(val);
-    }
-
-    template<class T>
-    T &get(const std::string &key)
-    {
-        return *(T *) _vars[key].get();
-    }
-
-    template<class T>
-    T *getPtr(const std::string &key)
-    {
-        return (T *) _vars[key].get();
-    }
-
 private:
     std::shared_ptr<ProtocolCodec> _protocolCodec;
     std::shared_ptr<Handler> _handler;
@@ -69,8 +45,6 @@ private:
     evutil_socket_t _listener = -1;
     struct event *_listenerEvent = nullptr;
     int _buffSize = DEFAULT_BUFFSIZE;
-
-    std::map<std::string, std::shared_ptr<void>> _vars;
 };
 
 struct ListenerEventArg {
