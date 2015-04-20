@@ -133,7 +133,7 @@ void EVCB::doRead(evutil_socket_t fd, short events, void *arg)
     }
 
     Nwg::ObjectContainer oc;
-    protocolCodec.encode(&session->getReadBuffer(), &oc);
+    protocolCodec.transformUp(&session->getReadBuffer(), &oc);
 
     session->resetWrite();
     handler.messageReceived(*session, oc.getObject());
@@ -169,7 +169,7 @@ void EVCB::doWrite(evutil_socket_t fd, short events, void *arg)
     ByteBuffer &writeBuffer      = session->getWriteBuffer();
 
     if (session->nWritten == 0) {
-        protocolCodec.decode(&session->getWriteObject(), &writeBuffer);
+        protocolCodec.transformDown(&session->getWriteObject(), &writeBuffer);
     }
 
     while (session->nWritten < writeBuffer.limit()) {

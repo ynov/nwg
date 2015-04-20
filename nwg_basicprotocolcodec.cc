@@ -12,14 +12,14 @@ BasicProtocolCodec::~BasicProtocolCodec()
 {
 }
 
-void BasicProtocolCodec::encode(ByteBuffer *in, ObjectContainer *out) const
+void BasicProtocolCodec::transformUp(ByteBuffer *in, ObjectContainer *out) const
 {
     ByteBuffer *encoded = new ByteBuffer(in->ssize());
     *encoded = *in;
     out->setObject(encoded);
 }
 
-void BasicProtocolCodec::decode(Object *in, ByteBuffer *out) const
+void BasicProtocolCodec::transformDown(Object *in, ByteBuffer *out) const
 {
     if (in == nullptr) {
         return;

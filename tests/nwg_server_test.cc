@@ -47,10 +47,10 @@ public:
 
         Nwg::ObjectContainer oc;
 
-        getProtocolCodec().encode(&in, &oc);
+        getProtocolCodec().transformUp(&in, &oc);
         getHandler().messageReceived(session, oc.getObject());
 
-        getProtocolCodec().decode(&session.getWriteObject(), &out);
+        getProtocolCodec().transformDown(&session.getWriteObject(), &out);
         Nwg::ByteBuffer outCopy = out;
         printf(" >> %s\n", out.sread(out.remaining()).c_str());
         getHandler().messageSent(session, outCopy);
