@@ -1,10 +1,12 @@
 CXX=g++
+TOOLSET=gcc
+MAKE=make
 DFLAGS=
 CXXINCLUDEDIR=-I`pwd` -I`pwd`/deps/libevent/include -I`pwd`/deps/boost
 CXXFLAGS=-O2 -g -Wall -fmessage-length=0 -std=c++11 $(CXXINCLUDEDIR) $(DFLAGS)
 LIBDIR=-L`pwd`
 LIBS=$(LIBDIR) -lnwg -levent
-BOOST_BOOTSTRAP=./bootstrap.sh
+BOOST_BOOTSTRAP=./bootstrap.sh --with-toolset=$(TOOLSET)
 BOOSTLIBS=-lboost_regex -lboost_filesystem -lboost_system
 
 ifeq ($(OS),Windows_NT)
@@ -45,7 +47,7 @@ deps: libboost libevent
 deps/libevent/.libs/libevent.a:
 	cd deps/libevent && \
 	./configure --disable-shared && \
-	make -j4
+	$(MAKE) -j4
 
 libevent.a: deps/libevent/.libs/libevent.a
 	cp -f $< $(notdir $<)
@@ -56,7 +58,7 @@ libevent: libevent.a
 deps/boost/stage/lib/libboost_regex.a deps/boost/stage/lib/libboost_filesystem.a deps/boost/stage/lib/libboost_system.a:
 	cd deps/boost && \
 	$(BOOST_BOOTSTRAP) && \
-	./b2 --with-regex --with-filesystem link=static threading=single variant=release toolset=gcc &&\
+	./b2 --with-regex --with-filesystem link=static threading=single variant=release toolset=$(TOOLSET) && \
 	cd stage/lib && \
 	if [ ! -e libboost_regex.a ]; then mv -f libboost_regex*.a libboost_regex.a; fi && \
 	if [ ! -e libboost_filesystem.a ]; then mv -f libboost_filesystem*.a libboost_filesystem.a; fi && \
