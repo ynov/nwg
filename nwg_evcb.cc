@@ -112,7 +112,7 @@ void EVCB::doRead(evutil_socket_t fd, short events, void *arg)
         bool err_eagain = false;
 
 #ifdef __unix__
-        err_eagain = errno == EAGAIN;
+        err_eagain = (errno == EAGAIN || errno == EWOULDBLOCK);
 #endif /* __unix__ */
 
 #ifdef _WIN32
