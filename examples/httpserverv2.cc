@@ -29,7 +29,7 @@ using boost::smatch;
 using namespace boost::filesystem;
 
 static int numReq = 0;
-static const path workingPath = absolute(current_path());
+static path workingPath;
 
 struct SessionState : public Nwg::Object {
     int reqNo             = 0;
@@ -156,7 +156,7 @@ public:
                 state.nwritten = 0;
                 state.is = is;
 
-                _printf("==== DATA TO BE WRITTEN: %d ====\n", out.limit());
+                _printf("==== DATA TO BE WRITTEN: %d ====\n", length);
 
                 out->put("HTTP/1.1 200 OK\r\n");
                 out->put("Content-Type: text/plain\r\n");
@@ -274,6 +274,8 @@ void run(int port)
 {
     Nwg::Server server(port);
     server.setBuffSize(BUFFSIZE);
+
+    workingPath = absolute(current_path());
 
     server.setProtocolCodec(std::make_shared<Nwg::BasicProtocolCodec>());
     server.setHandler(std::make_shared<HttpHandler>());

@@ -196,7 +196,7 @@ void EVCB::doWrite(evutil_socket_t fd, short events, void *arg)
                 _dprintf("DDDD-- errno == EAGAIN (OK)\n");
                 return;
             } else {
-                _dprintf("DDDD-- errno IS NOT EAGAIN\n");
+                _dprintf("DDDD-- errno IS NOT EAGAIN, errno = %d\n", errno);
                 return;
             }
         }
@@ -209,7 +209,7 @@ void EVCB::doWrite(evutil_socket_t fd, short events, void *arg)
 
     if (session->nWritten != writeBuffer.limit()) {
         _dprintf("DDDD-- it suddenly goes here...\n");
-        _dprintf("DDDD-- session.nWritten == %d, writeBuffer.limit() == %d\n", session.nWritten, writeBuffer.limit());
+        _dprintf("DDDD-- session.nWritten == %d, writeBuffer.limit() == %d\n", (int) session->nWritten, (int) writeBuffer.limit());
         return;
     }
 
