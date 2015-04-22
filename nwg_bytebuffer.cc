@@ -20,7 +20,7 @@ int ByteBuffer::ssize() { return _limit; }
 void ByteBuffer::forward(int n) { _position += n; }
 void ByteBuffer::rewind(int n) { _position -= n; }
 void ByteBuffer::jump(int n) { _position = n; }
-void ByteBuffer::reset() { _limit = 0; _position = 0; }
+void ByteBuffer::reset() { _bs.clear(); _limit = 0; _position = 0; }
 void ByteBuffer::flip() { _limit = _position; _position = 0; }
 int ByteBuffer::remaining() { return _limit - _position; }
 size_t ByteBuffer::position() { return _position; }
