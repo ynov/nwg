@@ -51,6 +51,11 @@ int Server::getBuffSize()
     return _buffSize;
 }
 
+int Server::getReadBuffSize()
+{
+    return _readBuffSize;
+}
+
 void Server::setPort(int port)
 {
     _port = port;
@@ -59,6 +64,11 @@ void Server::setPort(int port)
 void Server::setBuffSize(int buffSize)
 {
     _buffSize = buffSize;
+}
+
+void Server::setReadBuffSize(int readBuffSize)
+{
+    _readBuffSize = readBuffSize;
 }
 
 void Server::run()

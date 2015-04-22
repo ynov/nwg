@@ -89,18 +89,25 @@ void EVCB::doRead(evutil_socket_t fd, short events, void *arg)
     Handler &handler             = server.getHandler();
     ByteBuffer &readBuffer       = session->getReadBuffer();
     ByteBuffer &writeBuffer      = session->getWriteBuffer();
+    int readBuffSize             = server.getReadBuffSize();
 
-    char buf[SMALL_BUFFSIZE];
+    char buf[DEFAULT_BUFFSIZE];
     ssize_t result;
 
-    while (1) {
+    while (1 && session->nRead < readBuffSize) {
         result = recv(fd, buf, sizeof(buf), 0);
-        if (result <= 0)
+        if (result <= 0) {
             break;
+        }
 
         readBuffer.put(buf, result);
+        session->nRead += result;
     }
     readBuffer.flip();
+
+    if (session->nRead >= readBuffSize) {
+        session->stillReading = true;
+    }
 
     if (result == 0) {
         handler.sessionClosed(*session);
@@ -109,6 +116,9 @@ void EVCB::doRead(evutil_socket_t fd, short events, void *arg)
         delete session;
         return;
     } else if (result < 0) {
+        session->nRead = 0;
+        session->stillReading = false;
+
         bool err_eagain = false;
 
 #ifdef __unix__
@@ -121,6 +131,7 @@ void EVCB::doRead(evutil_socket_t fd, short events, void *arg)
 #endif /* _W32 */
 
         if (!err_eagain) {
+            // TODO: throw error
             handler.sessionClosed(*session);
 
             perror("recv()");
@@ -151,6 +162,11 @@ void EVCB::doRead(evutil_socket_t fd, short events, void *arg)
     }
 
     if (session->isWriteObjectPresent()) {
+        if (session->stillReading) {
+            // TODO: throw error
+            return;
+        }
+
         event_add(session->writeEvent, NULL);
     }
 
@@ -176,10 +192,6 @@ void EVCB::doWrite(evutil_socket_t fd, short events, void *arg)
         std::vector<byte> b = writeBuffer.read(writeBuffer.remaining());
         ssize_t result = send(fd, (char *) b.data(), b.size(), 0);
 
-        // _dprintf("DDDD-- writeBuffer.limit() = %d --\n", (int) writeBuffer.limit());
-        // _dprintf("DDDD-- b.size() = %d --\n", (int) b.size());
-        // _dprintf("DDDD-- result = %d --\n", (int) result);
-
         if (result < 0) {
             bool err_eagain = false;
 
@@ -196,18 +208,18 @@ void EVCB::doWrite(evutil_socket_t fd, short events, void *arg)
                 _dprintf("DDDD-- errno == EAGAIN (OK)\n");
                 return;
             } else {
+                // TODO: throw error
                 _dprintf("DDDD-- errno IS NOT EAGAIN, errno = %d\n", errno);
                 return;
             }
         }
 
-        // _dprintf("DDDD-- session.nWritten (%d) += result (%d) --\n", session.nWritten, result);
         session->nWritten += result;
-        // _dprintf("DDDD-- session.nWritten (%d) | limit() = %d --\n", session.nWritten, writeBuffer.limit());
         writeBuffer.jump(session->nWritten);
     }
 
     if (session->nWritten != writeBuffer.limit()) {
+        // TODO: throw error
         _dprintf("DDDD-- it suddenly goes here...\n");
         _dprintf("DDDD-- session.nWritten == %d, writeBuffer.limit() == %d\n", (int) session->nWritten, (int) writeBuffer.limit());
         return;

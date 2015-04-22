@@ -42,6 +42,8 @@ public:
     bool isClosed();
     int getFd();
 
+    bool stillReading = false;
+    size_t nRead = 0;
     size_t nWritten = 0;
     struct event *readEvent = nullptr;
     struct event *writeEvent = nullptr;

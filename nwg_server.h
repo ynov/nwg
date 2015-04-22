@@ -7,8 +7,9 @@
 
 #include <event2/event.h>
 
-#define DEFAULT_BUFFSIZE 32768
-#define SMALL_BUFFSIZE 1024
+#define DEFAULT_READ_BUFFSIZE 2097152 /* 2MB */
+#define DEFAULT_BUFFSIZE 32768 /* 32KB */
+#define SMALL_BUFFSIZE 1024 /* 1KB */
 
 #include "nwg_handler.h"
 
@@ -31,9 +32,11 @@ public:
 
     void setPort(int port);
     void setBuffSize(int buffsize);
+    void setReadBuffSize(int buffsize);
 
     int getPort();
     int getBuffSize();
+    int getReadBuffSize();
 
     void run();
 
@@ -45,6 +48,7 @@ private:
     evutil_socket_t _listener = -1;
     struct event *_listenerEvent = nullptr;
     int _buffSize = DEFAULT_BUFFSIZE;
+    int _readBuffSize = DEFAULT_READ_BUFFSIZE;
 };
 
 struct ListenerEventArg {
