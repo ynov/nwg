@@ -89,21 +89,23 @@ void EVCB::doRead(evutil_socket_t fd, short events, void *arg)
     Handler &handler             = server.getHandler();
     ByteBuffer &readBuffer       = session->getReadBuffer();
     ByteBuffer &writeBuffer      = session->getWriteBuffer();
-    int readBuffSize             = server.getReadBuffSize();
+    size_t readBuffSize          = server.getReadBuffSize();
 
-    char buf[DEFAULT_BUFFSIZE];
-    ssize_t result;
+    char *buff = new char[readBuffSize];
+    ssize_t result = 0;
 
     while (1 && session->nRead < readBuffSize) {
-        result = recv(fd, buf, sizeof(buf), 0);
+        result = recv(fd, buff, readBuffSize, 0);
         if (result <= 0) {
             break;
         }
 
-        readBuffer.put(buf, result);
+        readBuffer.put(buff, result);
         session->nRead += result;
     }
     readBuffer.flip();
+
+    delete [] buff;
 
     if (session->nRead >= readBuffSize) {
         session->stillReading = true;

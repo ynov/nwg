@@ -46,12 +46,12 @@ int Server::getPort()
     return _port;
 }
 
-int Server::getBuffSize()
+size_t Server::getBuffSize()
 {
     return _buffSize;
 }
 
-int Server::getReadBuffSize()
+size_t Server::getReadBuffSize()
 {
     return _readBuffSize;
 }

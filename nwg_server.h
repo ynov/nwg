@@ -35,8 +35,8 @@ public:
     void setReadBuffSize(int buffsize);
 
     int getPort();
-    int getBuffSize();
-    int getReadBuffSize();
+    size_t getBuffSize();
+    size_t getReadBuffSize();
 
     void run();
 
@@ -47,8 +47,8 @@ private:
     int _port;
     evutil_socket_t _listener = -1;
     struct event *_listenerEvent = nullptr;
-    int _buffSize = DEFAULT_BUFFSIZE;
-    int _readBuffSize = DEFAULT_READ_BUFFSIZE;
+    size_t _buffSize = DEFAULT_BUFFSIZE;
+    size_t _readBuffSize = DEFAULT_READ_BUFFSIZE;
 };
 
 struct ListenerEventArg {
