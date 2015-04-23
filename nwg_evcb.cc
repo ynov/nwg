@@ -191,8 +191,10 @@ void EVCB::doWrite(evutil_socket_t fd, short events, void *arg)
     }
 
     while (session->nWritten < writeBuffer.limit()) {
-        std::vector<byte> b = writeBuffer.read(writeBuffer.remaining());
-        ssize_t result = send(fd, (char *) b.data(), b.size(), 0);
+        std::vector<byte> bs;
+
+        writeBuffer.read(bs, writeBuffer.remaining());
+        ssize_t result = send(fd, (char *) bs.data(), bs.size(), 0);
 
         if (result < 0) {
             bool err_eagain = false;

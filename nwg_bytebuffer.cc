@@ -2,6 +2,8 @@
 
 #include <cstring>
 
+#define RESERVE_SIZE 1 << 16 /* 64KB */
+
 namespace Nwg
 {
 
@@ -93,16 +95,27 @@ std::vector<byte> ByteBuffer::read(int size)
     return bs;
 }
 
-std::vector<byte> ByteBuffer::readUntil(byte mark)
+void ByteBuffer::read(std::vector<byte> &bs, int size)
 {
-    std::vector<byte> bs;
-    bs.reserve(4096);
+    bs.insert(bs.begin(), _bs.begin() + _position, _bs.begin() + _position + size);
+    _position += size;
+}
+
+void ByteBuffer::readUntil(std::vector<byte> &bs, byte mark)
+{
+    bs.reserve(RESERVE_SIZE);
 
     byte b = read();
     while (b != mark && _position < _limit) {
         bs.push_back(b);
         b = read();
     }
+}
+
+std::vector<byte> ByteBuffer::readUntil(byte mark)
+{
+    std::vector<byte> bs;
+    readUntil(bs, mark);
 
     return bs;
 }
@@ -118,7 +131,7 @@ std::string ByteBuffer::sread(int length)
 std::string ByteBuffer::sreadUntil(byte mark)
 {
     std::string s;
-    s.reserve(4096);
+    s.reserve(RESERVE_SIZE);
 
     byte b = read();
     while (b != mark && _position < _limit) {

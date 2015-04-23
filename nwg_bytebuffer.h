@@ -40,8 +40,10 @@ public:
 
     byte read();
     void read(byte *b, int size);
+    void read(std::vector<byte> &bs, int size);
     std::vector<byte> read(int size);
     std::vector<byte> readUntil(byte mark);
+    void readUntil(std::vector<byte> &bs, byte mark);
     std::string sread(int length);
     std::string sreadUntil(byte mark);
 
