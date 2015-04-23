@@ -7,9 +7,23 @@
 
 #include <event2/event.h>
 
-#define DEFAULT_READ_BUFFSIZE 2097152 /* 2MB */
-#define DEFAULT_BUFFSIZE 32768 /* 32KB */
-#define SMALL_BUFFSIZE 1024 /* 1KB */
+#define SZ_1KB      1 << 10
+#define SZ_4KB      1 << 12
+#define SZ_16KB     1 << 14
+#define SZ_32KB     1 << 15
+#define SZ_64KB     1 << 16
+#define SZ_128KB    1 << 17
+#define SZ_256KB    1 << 18
+#define SZ_512KB    1 << 19
+#define SZ_1MB      1 << 20
+#define SZ_2MB      1 << 21
+#define SZ_4MB      1 << 22
+#define SZ_8MB      1 << 23
+#define SZ_16MB     1 << 24
+#define SZ_32MB     1 << 25
+
+#define DEFAULT_BUFFSIZE     SZ_32KB
+#define DEFAULT_READBUFFSIZE SZ_1MB
 
 #include "nwg_handler.h"
 
@@ -48,7 +62,7 @@ private:
     evutil_socket_t _listener = -1;
     struct event *_listenerEvent = nullptr;
     size_t _buffSize = DEFAULT_BUFFSIZE;
-    size_t _readBuffSize = DEFAULT_READ_BUFFSIZE;
+    size_t _readBuffSize = DEFAULT_READBUFFSIZE;
 };
 
 struct ListenerEventArg {

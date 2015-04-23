@@ -8,8 +8,8 @@
 #include <nwg.h>
 #include <nwg_basicprotocolcodec.h>
 
-#define BUFFSIZE 32768
-#define READBUFFSIZE 16777216 /* 16MB */
+#define BUFFSIZE     SZ_64KB
+#define READBUFFSIZE SZ_4MB
 
 #ifndef SILENT
 #define SILENT 1
@@ -273,7 +273,9 @@ boost::regex HttpHandler::pattern = boost::regex(PATTERN);
 void run(int port)
 {
     Nwg::Server server(port);
+
     server.setBuffSize(BUFFSIZE);
+    server.setReadBuffSize(READBUFFSIZE);
 
     workingPath = absolute(current_path());
 
