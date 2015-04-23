@@ -1,7 +1,10 @@
-Copied from http://choosealicense.com/licenses/mit/
+3rd party licenses:
 This software uses libevent, see deps/libevent/LICENSE
+Some examples use boost, see deps/boost/LICENSE_1_0.txt
 
-==============================================================================
+==========
+Copied from http://choosealicense.com/licenses/mit/
+
 The MIT License (MIT)
 
 Copyright (c) 2015 Inov Yomanovian
