@@ -102,7 +102,8 @@ public:
         urlPath += url;
 
         /* request is okay and it is a directory */
-        if (requestOk && is_directory(urlPath) && (url.find("..") == -1)) {
+        if (requestOk && is_directory(urlPath) && (url.find("..") == -1))
+        {
             std::string sout;
             sout.reserve(BUFFSIZE);
 
@@ -145,7 +146,8 @@ public:
             url = url.substr(1);
             path p(url);
 
-            if (is_regular_file(p)) {
+            if (is_regular_file(p))
+            {
                 std::ifstream *is = new std::ifstream(p.string(), std::ios::binary);
                 is->seekg(0, is->end);
                 int length = is->tellg();

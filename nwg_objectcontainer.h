@@ -14,11 +14,11 @@ public:
     ObjectContainer();
     virtual ~ObjectContainer();
 
-    void setObject(Object *obj);
+    void setObject(std::unique_ptr<Object> obj);
     Object &getObject();
 
 private:
-    std::shared_ptr<Object> _obj;
+    std::unique_ptr<Object> _obj;
 };
 
 } /* namespace Nwg */

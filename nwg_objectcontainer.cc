@@ -13,9 +13,9 @@ ObjectContainer::~ObjectContainer()
     _obj.reset();
 }
 
-void ObjectContainer::setObject(Object *obj)
+void ObjectContainer::setObject(std::unique_ptr<Object> obj)
 {
-    _obj = std::shared_ptr<Object>(obj);
+    _obj = std::move(obj);
 }
 
 Object &ObjectContainer::getObject()

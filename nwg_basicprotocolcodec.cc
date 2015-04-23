@@ -14,9 +14,9 @@ BasicProtocolCodec::~BasicProtocolCodec()
 
 void BasicProtocolCodec::transformUp(ByteBuffer *in, ObjectContainer *out) const
 {
-    ByteBuffer *encoded = new ByteBuffer(in->ssize());
+    std::unique_ptr<ByteBuffer> encoded(new ByteBuffer(in->ssize()));
     *encoded = *in;
-    out->setObject(encoded);
+    out->setObject(std::move(encoded));
 }
 
 void BasicProtocolCodec::transformDown(Object *in, ByteBuffer *out) const
