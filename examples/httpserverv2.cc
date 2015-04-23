@@ -74,6 +74,10 @@ public:
         Nwg::ByteBuffer &msg = GETMSG(obj);
         SessionState &state  = GETSTATE(session);
 
+        if (session.stillReading) {
+            session.close();
+        }
+
         std::shared_ptr<Nwg::ByteBuffer> out(new Nwg::ByteBuffer(BUFFSIZE));
 
         std::string h1 = msg.sreadUntil('\n');
