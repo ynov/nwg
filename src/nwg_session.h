@@ -49,8 +49,7 @@ public:
     struct event *readEvent = nullptr;
     struct event *writeEvent = nullptr;
 
-    bool writeFirst = false;
-    bool wait = false;
+    bool x_manual = false;
 
     std::function<void(bool &wait)> waitFunction;
 

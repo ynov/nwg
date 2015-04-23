@@ -9,16 +9,17 @@
 
 int lastId = 0;
 std::mutex mutex;
-std::map<int, bool> m;
 
-void f(int id) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+std::map<int, struct event *> mevent;
+std::map<int, bool> mdone;
+
+void fn(int id) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(2500));
 
     mutex.lock();
-    m[id] = true;
+    event_add(mevent[id], NULL);
+    mdone[id] = true;
     mutex.unlock();
-
-    printf("Done for [%d]!\n", id);
 }
 
 class MyHandler : public Nwg::Handler
@@ -26,9 +27,16 @@ class MyHandler : public Nwg::Handler
     void sessionOpened(Nwg::Session &session)
     {
         int id = ++lastId;
-        std::thread(f, id).detach();
+
+        mutex.lock();
+        mevent[id] = session.writeEvent;
+        mdone[id] = false;
+        mutex.unlock();
+
+        std::thread(fn, id).detach();
 
         session.put<int>("id", std::make_shared<int>(id));
+        session.put<bool>("exit", std::make_shared<bool>(false));
 
         std::shared_ptr<Nwg::ByteBuffer> out(new Nwg::ByteBuffer());
         out->put("Please wait... [" + std::to_string(id) + "]\n");
@@ -47,23 +55,36 @@ class MyHandler : public Nwg::Handler
 
     void messageSent(Nwg::Session &session, Nwg::Object &obj)
     {
+        printf("Got here!\n");
         int id = session.get<int>("id");
+        bool &exit = session.get<bool>("exit");
 
-        session.wait = true;
-        session.waitFunction = [&mutex, &session, id](bool &wait) {
-            mutex.lock();
-            wait = !m[id];
-            mutex.unlock();
+        bool done = false;
 
-            std::shared_ptr<Nwg::ByteBuffer> out(new Nwg::ByteBuffer());
-            out->flip();
+        mutex.lock();
+        done = mdone[id];
+        mutex.unlock();
 
-            session.write(out);
+        if (exit) {
+            session.close();
+            return;
+        }
 
-            if (!session.wait) {
-                session.close();
-            }
-        };
+        if (!done) {
+            event_del(session.writeEvent);
+            session.x_manual = true;
+            return;
+        }
+
+        session.x_manual = false;
+
+        std::shared_ptr<Nwg::ByteBuffer> out(new Nwg::ByteBuffer());
+        out->put("OK!\n");
+        out->flip();
+
+        session.write(out);
+
+        exit = true;
     }
 };
 
