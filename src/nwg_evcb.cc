@@ -69,7 +69,7 @@ void EVCB::doAccept(evutil_socket_t listener, short event, void *arg)
             return;
         }
 
-        if (session->isWriteObjectPresent()) {
+        if (session->isWriteObjectPresent() || session->writeFirst) {
             event_add(session->writeEvent, NULL);
         } else {
             event_add(session->readEvent, NULL);
@@ -252,6 +252,11 @@ void EVCB::doWrite(evutil_socket_t fd, short events, void *arg)
     Handler &handler             = service.getHandler();
     ByteBuffer &writeBuffer      = session->getWriteBuffer();
 
+    if (session->wait) {
+        session->waitFunction(session->wait);
+        return;
+    }
+
     if (session->nWritten == 0) {
         protocolCodec.transformDown(&session->getWriteObject(), &writeBuffer);
     }
@@ -323,6 +328,11 @@ void EVCB::doWrite(evutil_socket_t fd, short events, void *arg)
 
         _dprintf("D-- %40s --\n", "doWrite() OUT (closed)");
         delete session;
+        return;
+    }
+
+    if (session->wait) {
+        session->waitFunction(session->wait);
         return;
     }
 

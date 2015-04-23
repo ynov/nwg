@@ -4,8 +4,8 @@ MAKE=make
 DFLAGS=
 CXXINCLUDEDIR=-I`pwd`/src -I`pwd`/deps/libevent/include -I`pwd`/deps/boost
 CXXFLAGS=-O2 -g -Wall -fmessage-length=0 -std=c++11 $(CXXINCLUDEDIR) $(DFLAGS)
-LIBDIR=-L`pwd`/lib
-LIBS=$(LIBDIR) -lnwg -levent
+LIBDIR=-L`pwd`
+LIBS=$(LIBDIR) -lnwg -levent -lpthread
 BOOST_BOOTSTRAP=./bootstrap.sh --with-toolset=$(TOOLSET)
 BOOSTLIBS=-lboost_regex -lboost_filesystem -lboost_system
 
@@ -25,7 +25,8 @@ examples: lib/libnwg.a \
 	examples/exm_echoserver \
 	examples/exm_echoclient \
 	examples/exm_httpserverv1 \
-	examples/exm_httpserverv2
+	examples/exm_httpserverv2 \
+	examples/exm_threads
 
 lib/libnwg.a: \
 	nwg_objectcontainer.o \

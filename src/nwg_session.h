@@ -3,6 +3,7 @@
 
 #include <map>
 #include <memory>
+#include <functional>
 
 #include <event2/event.h>
 
@@ -47,6 +48,11 @@ public:
     size_t nWritten = 0;
     struct event *readEvent = nullptr;
     struct event *writeEvent = nullptr;
+
+    bool writeFirst = false;
+    bool wait = false;
+
+    std::function<void(bool &wait)> waitFunction;
 
     template<class T>
     void put(const std::string &key, const std::shared_ptr<T> &val)
