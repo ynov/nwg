@@ -26,8 +26,10 @@ Acceptor::~Acceptor()
     if (_listenerEventArg != nullptr) {
         delete _listenerEventArg;
     }
-}
 
+    event_del(_listenerEvent);
+    ::close(_listenerFd);
+}
 
 void Acceptor::setPort(int port) { _port = port; }
 int Acceptor::getPort() { return _port; }
