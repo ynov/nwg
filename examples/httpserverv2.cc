@@ -282,9 +282,6 @@ void run(int port)
 
     acceptor.setBuffSize(BUFFSIZE);
     acceptor.setReadBuffSize(READBUFFSIZE);
-
-    workingPath = absolute(current_path());
-
     acceptor.setProtocolCodec(std::make_shared<Nwg::BasicProtocolCodec>());
     acceptor.setHandler(std::make_shared<HttpHandler>());
 
@@ -296,11 +293,15 @@ void run(int port)
 
 int main(int argc, char **argv)
 {
-    int port = 8840;
+    workingPath = absolute(current_path());
 
-    if (argc > 1) {
-        port = std::stoi(argv[1]);
-    }
+    int port = [=]() {
+        if (argc > 1) {
+            return std::stoi(argv[1]);
+        } else {
+            return 8840;
+        }
+    }();
 
     run(port);
     return 0;

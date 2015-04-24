@@ -94,6 +94,8 @@ tests/test_nwg_acceptor: libnwg.a tests/nwg_acceptor_test.cc
 	$(CXX) -o tests/test_nwg_acceptor \
 		tests/nwg_acceptor_test.cc $(CXXFLAGS) $(LIBS)
 
+.PHONY: clean
+
 clean:
 	rm -f tests/test_*
 	rm -f examples/exm_*
