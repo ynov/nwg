@@ -30,12 +30,13 @@
 namespace Nwg
 {
 
+struct ListenerEventArg;
 class ProtocolCodec;
 
 class Acceptor : public Object
 {
 public:
-    Acceptor(int port);
+    Acceptor(int port, const Acceptor *acceptor = nullptr);
     virtual ~Acceptor();
 
     void setProtocolCodec(const std::shared_ptr<ProtocolCodec> &protocolCodec);
@@ -52,23 +53,27 @@ public:
     size_t getBuffSize();
     size_t getReadBuffSize();
 
-    struct event_base *getBase();
+    struct event_base *getBase() const;
 
     void listen();
 
 private:
+    int _port;
+    struct event_base *_base;
+
+    evutil_socket_t _listenerFd;
+    struct event *_listenerEvent;
+    ListenerEventArg *_listenerEventArg;
+
     std::shared_ptr<ProtocolCodec> _protocolCodec;
     std::shared_ptr<Handler> _handler;
 
-    int _port;
-    struct event_base *_base;
-    evutil_socket_t _listenerFd = -1;
-    struct event *_listenerEvent = nullptr;
     size_t _buffSize = DEFAULT_BUFFSIZE;
     size_t _readBuffSize = DEFAULT_READBUFFSIZE;
 };
 
-struct ListenerEventArg {
+struct ListenerEventArg
+{
     struct event_base *base;
     Acceptor *acceptor;
 };

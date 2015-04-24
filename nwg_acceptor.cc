@@ -12,18 +12,28 @@
 namespace Nwg
 {
 
-Acceptor::Acceptor(int port)
-    : _base(nullptr),
+Acceptor::Acceptor(int port, const Acceptor *acceptor)
+    : _port(port),
+      _base(nullptr),
+      _listenerFd(-1),
+      _listenerEvent(nullptr),
+      _listenerEventArg(nullptr),
       _protocolCodec(nullptr),
-      _handler(nullptr),
-      _port(port)
+      _handler(nullptr)
 {
+    if (acceptor != nullptr) {
+        _base = acceptor->getBase();
+    }
 }
 
 Acceptor::~Acceptor()
 {
     _protocolCodec.reset();
     _handler.reset();
+
+    if (_listenerEventArg != nullptr) {
+        delete _listenerEventArg;
+    }
 }
 
 void Acceptor::setProtocolCodec(const std::shared_ptr<ProtocolCodec> &protocolCodec)
@@ -76,7 +86,7 @@ void Acceptor::setReadBuffSize(int readBuffSize)
     _readBuffSize = readBuffSize;
 }
 
-struct event_base *Acceptor::getBase()
+struct event_base *Acceptor::getBase() const
 {
     return _base;
 }
@@ -101,10 +111,14 @@ void Acceptor::listen()
 
     struct sockaddr_in sin;
 
-    _base = event_base_new();
-    if (!_base) {
-        perror("event_base_new()");
-        return;
+    bool isNewBase = _base == nullptr;
+
+    if (isNewBase) {
+        _base = event_base_new();
+        if (!_base) {
+            perror("event_base_new()");
+            return;
+        }
     }
 
     memset(&sin, 0, sizeof(sin));
@@ -132,20 +146,20 @@ void Acceptor::listen()
         return;
     }
 
-    ListenerEventArg *listenerEventArg = new ListenerEventArg();
-    listenerEventArg->base   = _base;
-    listenerEventArg->acceptor = this;
+    _listenerEventArg = new ListenerEventArg();
+    _listenerEventArg->base     = _base;
+    _listenerEventArg->acceptor = this;
 
     _listenerEvent = event_new(_base, _listenerFd,
             EV_READ | EV_PERSIST,
             EVCB::doAccept,
-            (void *) listenerEventArg);
+            (void *) _listenerEventArg);
 
     event_add(_listenerEvent, NULL);
 
-    event_base_dispatch(_base);
-
-    delete listenerEventArg;
+    if (isNewBase) {
+        event_base_dispatch(_base);
+    }
 }
 
 } /* namespace Nwg */
