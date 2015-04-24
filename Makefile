@@ -34,7 +34,9 @@ libnwg.a: \
 	nwg_protocolcodec.o \
 	nwg_basicprotocolcodec.o \
 	nwg_handler.o \
+	nwg_service.o \
 	nwg_acceptor.o \
+	nwg_connector.o \
 	nwg_evcb.o
 	ar rcs libnwg.a nwg_*.o
 

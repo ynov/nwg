@@ -39,7 +39,7 @@ void EVCB::doAccept(evutil_socket_t listener, short event, void *arg)
     ListenerEventArg &listenerEventArg = *(ListenerEventArg *) arg;
 
     struct event_base *base = listenerEventArg.base;
-    Acceptor &acceptor          = *listenerEventArg.acceptor;
+    Acceptor &acceptor      = *listenerEventArg.acceptor;
     Handler &handler        = acceptor.getHandler();
 
     struct sockaddr_storage ss;
