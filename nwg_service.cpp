@@ -11,6 +11,14 @@ Service::Service(const Service *service)
     if (service != nullptr) {
         _base = service->getBase();
     }
+
+    if (_base == nullptr) {
+        _base = event_base_new();
+        if (!_base) {
+            perror("event_base_new()");
+            return;
+        }
+    }
 }
 
 Service::~Service()

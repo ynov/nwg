@@ -32,7 +32,7 @@ Acceptor::~Acceptor()
 void Acceptor::setPort(int port) { _port = port; }
 int Acceptor::getPort() { return _port; }
 
-void Acceptor::listen()
+void Acceptor::listen(bool dispatch)
 {
 #ifdef _WIN32
     do {
@@ -51,7 +51,6 @@ void Acceptor::listen()
 #endif /* _WIN32 */
 
     struct sockaddr_in sin;
-    bool isNewBase = _base == nullptr;
 
     memset(&sin, 0, sizeof(sin));
     sin.sin_family      = AF_INET;
@@ -78,14 +77,6 @@ void Acceptor::listen()
         return;
     }
 
-    if (isNewBase) {
-        _base = event_base_new();
-        if (!_base) {
-            perror("event_base_new()");
-            return;
-        }
-    }
-
     _listenerEventArg = new ListenerEventArg();
     _listenerEventArg->base     = _base;
     _listenerEventArg->acceptor = this;
@@ -97,7 +88,7 @@ void Acceptor::listen()
 
     event_add(_listenerEvent, NULL);
 
-    if (isNewBase) {
+    if (dispatch) {
         event_base_dispatch(_base);
     }
 }

@@ -291,7 +291,7 @@ void run(int port)
     printf("Listening on port %d\n", acceptor.getPort());
     printf("Open http://127.0.0.1:%d/\n", acceptor.getPort());
 
-    acceptor.listen();
+    acceptor.listen(true);
 }
 
 int main(int argc, char **argv)
