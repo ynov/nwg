@@ -12,7 +12,7 @@
 namespace Nwg
 {
 
-class Server;
+class Acceptor;
 
 class Session: public Object
 {
@@ -21,7 +21,7 @@ public:
     Session(int bufferAllocationSize,
             struct event_base *base,
             evutil_socket_t fd,
-            Server *server);
+            Acceptor *acceptor);
     virtual ~Session();
 
     void write(const std::shared_ptr<Object> &obj);
@@ -37,7 +37,7 @@ public:
     Object &getLastWriteObject();
     ByteBuffer &getReadBuffer();
     ByteBuffer &getWriteBuffer();
-    Server &getServer();
+    Acceptor &getAcceptor();
 
     bool isClosed();
     int getFd();
@@ -75,7 +75,7 @@ private:
     ByteBuffer _writeBuffer;
 
     evutil_socket_t _fd = -1;
-    Server *_server = nullptr;
+    Acceptor *_acceptor = nullptr;
 
     bool _closed = false;
     std::map<std::string, std::shared_ptr<void>> _vars;

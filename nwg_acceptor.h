@@ -1,5 +1,5 @@
-#ifndef NWG_SERVER_H_
-#define NWG_SERVER_H_
+#ifndef NWG_ACCEPTOR_H_
+#define NWG_ACCEPTOR_H_
 
 #include <map>
 #include <memory>
@@ -32,11 +32,11 @@ namespace Nwg
 
 class ProtocolCodec;
 
-class Server : public Object
+class Acceptor : public Object
 {
 public:
-    Server(int port);
-    virtual ~Server();
+    Acceptor(int port);
+    virtual ~Acceptor();
 
     void setProtocolCodec(const std::shared_ptr<ProtocolCodec> &protocolCodec);
     void setHandler(const std::shared_ptr<Handler> &handler);
@@ -54,7 +54,7 @@ public:
 
     struct event_base *getBase();
 
-    void run();
+    void listen();
 
 private:
     std::shared_ptr<ProtocolCodec> _protocolCodec;
@@ -70,9 +70,9 @@ private:
 
 struct ListenerEventArg {
     struct event_base *base;
-    Server *server;
+    Acceptor *acceptor;
 };
 
 } /* namespace Nwg */
 
-#endif /* NWG_SERVER_H_ */
+#endif /* NWG_ACCEPTOR_H_ */

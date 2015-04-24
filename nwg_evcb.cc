@@ -7,12 +7,12 @@
 #include <cstdio>
 #include <cerrno>
 
+#include "nwg_acceptor.h"
 #include "nwg_object.h"
 #include "nwg_objectcontainer.h"
 #include "nwg_bytebuffer.h"
 #include "nwg_protocolcodec.h"
 #include "nwg_handler.h"
-#include "nwg_server.h"
 #include "nwg_session.h"
 
 #ifdef _WIN32
@@ -39,8 +39,8 @@ void EVCB::doAccept(evutil_socket_t listener, short event, void *arg)
     ListenerEventArg &listenerEventArg = *(ListenerEventArg *) arg;
 
     struct event_base *base = listenerEventArg.base;
-    Server &server          = *listenerEventArg.server;
-    Handler &handler        = server.getHandler();
+    Acceptor &acceptor          = *listenerEventArg.acceptor;
+    Handler &handler        = acceptor.getHandler();
 
     struct sockaddr_storage ss;
     socklen_t slen = sizeof(ss);
@@ -53,7 +53,7 @@ void EVCB::doAccept(evutil_socket_t listener, short event, void *arg)
     } else {
         evutil_make_socket_nonblocking(fd);
 
-        Session *session = new Session(server.getBuffSize(), base, fd, &server);
+        Session *session = new Session(acceptor.getBuffSize(), base, fd, &acceptor);
         session->resetWrite();
 
         handler.sessionOpened(*session);
@@ -84,12 +84,12 @@ void EVCB::doRead(evutil_socket_t fd, short events, void *arg)
 
     Session *session = (Session *) arg;
 
-    Server &server               = session->getServer();
-    ProtocolCodec &protocolCodec = server.getProtocolCodec();
-    Handler &handler             = server.getHandler();
+    Acceptor &acceptor           = session->getAcceptor();
+    ProtocolCodec &protocolCodec = acceptor.getProtocolCodec();
+    Handler &handler             = acceptor.getHandler();
     ByteBuffer &readBuffer       = session->getReadBuffer();
     ByteBuffer &writeBuffer      = session->getWriteBuffer();
-    size_t readBuffSize          = server.getReadBuffSize();
+    size_t readBuffSize          = acceptor.getReadBuffSize();
 
     char *buff = new char[readBuffSize];
     ssize_t result = 0;
@@ -181,9 +181,9 @@ void EVCB::doWrite(evutil_socket_t fd, short events, void *arg)
 
     Session *session = (Session *) arg;
 
-    Server &server               = session->getServer();
-    ProtocolCodec &protocolCodec = server.getProtocolCodec();
-    Handler &handler             = server.getHandler();
+    Acceptor &acceptor           = session->getAcceptor();
+    ProtocolCodec &protocolCodec = acceptor.getProtocolCodec();
+    Handler &handler             = acceptor.getHandler();
     ByteBuffer &writeBuffer      = session->getWriteBuffer();
 
     if (session->nWritten == 0) {

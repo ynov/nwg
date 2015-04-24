@@ -30,10 +30,10 @@ class DummyHandler : public Nwg::Handler
     }
 };
 
-class DummyServer : public Nwg::Server
+class DummyAcceptor : public Nwg::Acceptor
 {
 public:
-    DummyServer() : Nwg::Server(8845) {}
+    DummyAcceptor() : Nwg::Acceptor(8845) {}
 
     void wtf()
     {
@@ -61,13 +61,13 @@ void test_dummy()
 {
     printf("-- BEGIN test_dummy() --\n\n");
 
-    DummyServer server;
-    server.setBuffSize(BUFFSIZE);
+    DummyAcceptor acceptor;
+    acceptor.setBuffSize(BUFFSIZE);
 
-    server.setProtocolCodec(std::make_shared<Nwg::BasicProtocolCodec>());
-    server.setHandler(std::make_shared<DummyHandler>());
+    acceptor.setProtocolCodec(std::make_shared<Nwg::BasicProtocolCodec>());
+    acceptor.setHandler(std::make_shared<DummyHandler>());
 
-    server.wtf();
+    acceptor.wtf();
 
     printf("\n-- END test_dummy() --\n");
 }

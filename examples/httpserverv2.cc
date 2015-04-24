@@ -278,20 +278,20 @@ boost::regex HttpHandler::pattern = boost::regex(PATTERN);
 
 void run(int port)
 {
-    Nwg::Server server(port);
+    Nwg::Acceptor acceptor(port);
 
-    server.setBuffSize(BUFFSIZE);
-    server.setReadBuffSize(READBUFFSIZE);
+    acceptor.setBuffSize(BUFFSIZE);
+    acceptor.setReadBuffSize(READBUFFSIZE);
 
     workingPath = absolute(current_path());
 
-    server.setProtocolCodec(std::make_shared<Nwg::BasicProtocolCodec>());
-    server.setHandler(std::make_shared<HttpHandler>());
+    acceptor.setProtocolCodec(std::make_shared<Nwg::BasicProtocolCodec>());
+    acceptor.setHandler(std::make_shared<HttpHandler>());
 
-    printf("Listening on port %d\n", server.getPort());
-    printf("Open http://127.0.0.1:%d/\n", server.getPort());
+    printf("Listening on port %d\n", acceptor.getPort());
+    printf("Open http://127.0.0.1:%d/\n", acceptor.getPort());
 
-    server.run();
+    acceptor.listen();
 }
 
 int main(int argc, char **argv)

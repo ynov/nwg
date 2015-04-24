@@ -2,7 +2,7 @@
 
 #include <cstring>
 
-#include "nwg_server.h"
+#include "nwg_acceptor.h"
 #include "nwg_evcb.h"
 
 #include "nwg_object.h"
@@ -12,73 +12,76 @@
 namespace Nwg
 {
 
-Server::Server(int port)
-    : _protocolCodec(nullptr), _handler(nullptr), _port(port)
+Acceptor::Acceptor(int port)
+    : _base(nullptr),
+      _protocolCodec(nullptr),
+      _handler(nullptr),
+      _port(port)
 {
 }
 
-Server::~Server()
+Acceptor::~Acceptor()
 {
     _protocolCodec.reset();
     _handler.reset();
 }
 
-void Server::setProtocolCodec(const std::shared_ptr<ProtocolCodec> &protocolCodec)
+void Acceptor::setProtocolCodec(const std::shared_ptr<ProtocolCodec> &protocolCodec)
 {
     _protocolCodec = protocolCodec;
 }
 
-void Server::setHandler(const std::shared_ptr<Handler> &handler)
+void Acceptor::setHandler(const std::shared_ptr<Handler> &handler)
 {
     _handler = handler;
 }
 
-ProtocolCodec &Server::getProtocolCodec()
+ProtocolCodec &Acceptor::getProtocolCodec()
 {
     return *_protocolCodec;
 }
 
-Handler &Server::getHandler()
+Handler &Acceptor::getHandler()
 {
     return *_handler;
 }
 
-int Server::getPort()
+int Acceptor::getPort()
 {
     return _port;
 }
 
-size_t Server::getBuffSize()
+size_t Acceptor::getBuffSize()
 {
     return _buffSize;
 }
 
-size_t Server::getReadBuffSize()
+size_t Acceptor::getReadBuffSize()
 {
     return _readBuffSize;
 }
 
-void Server::setPort(int port)
+void Acceptor::setPort(int port)
 {
     _port = port;
 }
 
-void Server::setBuffSize(int buffSize)
+void Acceptor::setBuffSize(int buffSize)
 {
     _buffSize = buffSize;
 }
 
-void Server::setReadBuffSize(int readBuffSize)
+void Acceptor::setReadBuffSize(int readBuffSize)
 {
     _readBuffSize = readBuffSize;
 }
 
-struct event_base *Server::getBase()
+struct event_base *Acceptor::getBase()
 {
     return _base;
 }
 
-void Server::run()
+void Acceptor::listen()
 {
 #ifdef _WIN32
     do {
@@ -109,29 +112,29 @@ void Server::run()
     sin.sin_addr.s_addr = 0;
     sin.sin_port        = htons(_port);
 
-    _listenerFd = socket(AF_INET, SOCK_STREAM, 0);
+    _listenerFd = ::socket(AF_INET, SOCK_STREAM, 0);
     evutil_make_socket_nonblocking(_listenerFd);
 
 #ifdef __unix__
     do {
         int one = 1;
-        setsockopt(_listenerFd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one));
+        ::setsockopt(_listenerFd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one));
     } while(0);
 #endif /* __unix__ */
 
-    if (bind(_listenerFd, (struct sockaddr *) &sin, sizeof(sin)) < 0) {
+    if (::bind(_listenerFd, (struct sockaddr *) &sin, sizeof(sin)) < 0) {
         perror("bind()");
         return;
     }
 
-    if (listen(_listenerFd, 16) < 0) {
+    if (::listen(_listenerFd, 16) < 0) {
         perror("listen()");
         return;
     }
 
     ListenerEventArg *listenerEventArg = new ListenerEventArg();
     listenerEventArg->base   = _base;
-    listenerEventArg->server = this;
+    listenerEventArg->acceptor = this;
 
     _listenerEvent = event_new(_base, _listenerFd,
             EV_READ | EV_PERSIST,
