@@ -106,7 +106,7 @@ public:
         urlPath += url;
 
         /* request is okay and it is a directory */
-        if (requestOk && is_directory(urlPath) && (url.find("..") == -1))
+        if (requestOk && is_directory(urlPath) && ((int) url.find("..") == -1))
         {
             std::string sout;
             sout.reserve(BUFFSIZE);
