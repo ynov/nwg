@@ -13,6 +13,22 @@ Service::Service(const Service *service)
     }
 
     if (_base == nullptr) {
+#ifdef _WIN32
+    do {
+        WORD wVersionRequested;
+        WSADATA wsaData;
+        int err;
+
+        wVersionRequested = MAKEWORD(2, 2);
+
+        err = WSAStartup(wVersionRequested, &wsaData);
+        if (err != 0) {
+            printf("WSAStartup failed with error: %d\n", err);
+            return;
+        }
+    } while(0);
+#endif /* _WIN32 */
+
         _base = event_base_new();
         if (!_base) {
             perror("event_base_new()");

@@ -36,22 +36,6 @@ int Acceptor::getPort() { return _port; }
 
 void Acceptor::listen(bool dispatch)
 {
-#ifdef _WIN32
-    do {
-        WORD wVersionRequested;
-        WSADATA wsaData;
-        int err;
-
-        wVersionRequested = MAKEWORD(2, 2);
-
-        err = WSAStartup(wVersionRequested, &wsaData);
-        if (err != 0) {
-            printf("WSAStartup failed with error: %d\n", err);
-            return;
-        }
-    } while(0);
-#endif /* _WIN32 */
-
     struct sockaddr_in sin;
 
     memset(&sin, 0, sizeof(sin));
