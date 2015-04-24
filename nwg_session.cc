@@ -1,6 +1,6 @@
 #include "nwg_session.h"
 
-#include "nwg_acceptor.h"
+#include "nwg_service.h"
 #include "nwg_evcb.h"
 
 namespace Nwg
@@ -9,14 +9,14 @@ namespace Nwg
 Session::Session(int bufferAllocationSize,
         struct event_base *base,
         evutil_socket_t fd,
-        Acceptor *acceptor)
+        Service *service)
     : _bufferAllocationSize(bufferAllocationSize),
       _writeObject(nullptr),
       _lastWriteObject(nullptr),
       _readBuffer(ByteBuffer(bufferAllocationSize)),
       _writeBuffer(ByteBuffer(bufferAllocationSize)),
       _fd(fd),
-      _acceptor(acceptor)
+      _service(service)
 {
     if (base == nullptr) {
         return;
@@ -102,9 +102,9 @@ ByteBuffer &Session::getWriteBuffer()
     return _writeBuffer;
 }
 
-Acceptor &Session::getAcceptor()
+Service &Session::getService()
 {
-    return *_acceptor;
+    return *_service;
 }
 
 bool Session::isClosed()

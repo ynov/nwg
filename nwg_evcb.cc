@@ -84,12 +84,12 @@ void EVCB::doRead(evutil_socket_t fd, short events, void *arg)
 
     Session *session = (Session *) arg;
 
-    Acceptor &acceptor           = session->getAcceptor();
-    ProtocolCodec &protocolCodec = acceptor.getProtocolCodec();
-    Handler &handler             = acceptor.getHandler();
+    Service &service             = session->getService();
+    ProtocolCodec &protocolCodec = service.getProtocolCodec();
+    Handler &handler             = service.getHandler();
     ByteBuffer &readBuffer       = session->getReadBuffer();
     ByteBuffer &writeBuffer      = session->getWriteBuffer();
-    size_t readBuffSize          = acceptor.getReadBuffSize();
+    size_t readBuffSize          = service.getReadBuffSize();
 
     char *buff = new char[readBuffSize];
     ssize_t result = 0;
@@ -181,9 +181,9 @@ void EVCB::doWrite(evutil_socket_t fd, short events, void *arg)
 
     Session *session = (Session *) arg;
 
-    Acceptor &acceptor           = session->getAcceptor();
-    ProtocolCodec &protocolCodec = acceptor.getProtocolCodec();
-    Handler &handler             = acceptor.getHandler();
+    Service &service             = session->getService();
+    ProtocolCodec &protocolCodec = service.getProtocolCodec();
+    Handler &handler             = service.getHandler();
     ByteBuffer &writeBuffer      = session->getWriteBuffer();
 
     if (session->nWritten == 0) {
