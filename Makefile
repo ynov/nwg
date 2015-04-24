@@ -89,7 +89,7 @@ tests/test_nwg_bytebuffer: libnwg.a tests/nwg_bytebuffer_test.cc
 		tests/nwg_bytebuffer_test.cc $(CXXFLAGS) $(LIBS)
 
 tests/test_nwg_acceptor: libnwg.a tests/nwg_acceptor_test.cc
-	$(CXX) -o tests/test_nwg_server \
+	$(CXX) -o tests/test_nwg_acceptor \
 		tests/nwg_acceptor_test.cc $(CXXFLAGS) $(LIBS)
 
 clean:
