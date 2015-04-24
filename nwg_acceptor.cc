@@ -12,84 +12,25 @@
 namespace Nwg
 {
 
-Acceptor::Acceptor(int port, const Acceptor *acceptor)
-    : _port(port),
-      _base(nullptr),
+Acceptor::Acceptor(int port, const Service *service)
+    : Service(service),
+      _port(port),
       _listenerFd(-1),
       _listenerEvent(nullptr),
-      _listenerEventArg(nullptr),
-      _protocolCodec(nullptr),
-      _handler(nullptr)
+      _listenerEventArg(nullptr)
 {
-    if (acceptor != nullptr) {
-        _base = acceptor->getBase();
-    }
 }
 
 Acceptor::~Acceptor()
 {
-    _protocolCodec.reset();
-    _handler.reset();
-
     if (_listenerEventArg != nullptr) {
         delete _listenerEventArg;
     }
 }
 
-void Acceptor::setProtocolCodec(const std::shared_ptr<ProtocolCodec> &protocolCodec)
-{
-    _protocolCodec = protocolCodec;
-}
 
-void Acceptor::setHandler(const std::shared_ptr<Handler> &handler)
-{
-    _handler = handler;
-}
-
-ProtocolCodec &Acceptor::getProtocolCodec()
-{
-    return *_protocolCodec;
-}
-
-Handler &Acceptor::getHandler()
-{
-    return *_handler;
-}
-
-int Acceptor::getPort()
-{
-    return _port;
-}
-
-size_t Acceptor::getBuffSize()
-{
-    return _buffSize;
-}
-
-size_t Acceptor::getReadBuffSize()
-{
-    return _readBuffSize;
-}
-
-void Acceptor::setPort(int port)
-{
-    _port = port;
-}
-
-void Acceptor::setBuffSize(int buffSize)
-{
-    _buffSize = buffSize;
-}
-
-void Acceptor::setReadBuffSize(int readBuffSize)
-{
-    _readBuffSize = readBuffSize;
-}
-
-struct event_base *Acceptor::getBase() const
-{
-    return _base;
-}
+void Acceptor::setPort(int port) { _port = port; }
+int Acceptor::getPort() { return _port; }
 
 void Acceptor::listen()
 {
@@ -110,16 +51,7 @@ void Acceptor::listen()
 #endif /* _WIN32 */
 
     struct sockaddr_in sin;
-
     bool isNewBase = _base == nullptr;
-
-    if (isNewBase) {
-        _base = event_base_new();
-        if (!_base) {
-            perror("event_base_new()");
-            return;
-        }
-    }
 
     memset(&sin, 0, sizeof(sin));
     sin.sin_family      = AF_INET;
@@ -144,6 +76,14 @@ void Acceptor::listen()
     if (::listen(_listenerFd, 16) < 0) {
         perror("listen()");
         return;
+    }
+
+    if (isNewBase) {
+        _base = event_base_new();
+        if (!_base) {
+            perror("event_base_new()");
+            return;
+        }
     }
 
     _listenerEventArg = new ListenerEventArg();

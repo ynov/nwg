@@ -30,11 +30,35 @@
 namespace Nwg
 {
 
+class ProtocolCodec;
+
 class Service : public Object
 {
 public:
-    Service();
+    Service(const Service *service = nullptr);
     virtual ~Service();
+
+    void setBuffSize(int buffsize);
+    void setReadBuffSize(int buffsize);
+
+    void setProtocolCodec(const std::shared_ptr<ProtocolCodec> &protocolCodec);
+    void setHandler(const std::shared_ptr<Handler> &handler);
+
+    struct event_base *getBase() const;
+    size_t getBuffSize();
+    size_t getReadBuffSize();
+
+    Handler &getHandler();
+    ProtocolCodec &getProtocolCodec();
+
+protected:
+    struct event_base *_base;
+
+    size_t _buffSize = DEFAULT_BUFFSIZE;
+    size_t _readBuffSize = DEFAULT_READBUFFSIZE;
+
+    std::shared_ptr<ProtocolCodec> _protocolCodec;
+    std::shared_ptr<Handler> _handler;
 };
 
 } /* namespace Nwg */
