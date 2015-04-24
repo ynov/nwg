@@ -90,13 +90,13 @@ class MyHandler : public Nwg::Handler
 
 void run()
 {
-    Nwg::Server server(8850);
+    Nwg::Acceptor acceptor(8850);
 
-    server.setProtocolCodec(std::make_shared<Nwg::BasicProtocolCodec>());
-    server.setHandler(std::make_shared<MyHandler>());
+    acceptor.setProtocolCodec(std::make_shared<Nwg::BasicProtocolCodec>());
+    acceptor.setHandler(std::make_shared<MyHandler>());
 
-    printf("Listening on port %d\n", server.getPort());
-    server.run();
+    printf("Listening on port %d\n", acceptor.getPort());
+    acceptor.listen();
 }
 
 int main()
