@@ -52,6 +52,8 @@ public:
     size_t getBuffSize();
     size_t getReadBuffSize();
 
+    struct event_base *getBase();
+
     void run();
 
 private:
@@ -59,7 +61,8 @@ private:
     std::shared_ptr<Handler> _handler;
 
     int _port;
-    evutil_socket_t _listener = -1;
+    struct event_base *_base;
+    evutil_socket_t _listenerFd = -1;
     struct event *_listenerEvent = nullptr;
     size_t _buffSize = DEFAULT_BUFFSIZE;
     size_t _readBuffSize = DEFAULT_READBUFFSIZE;
