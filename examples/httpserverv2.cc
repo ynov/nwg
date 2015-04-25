@@ -276,19 +276,109 @@ public:
 
 boost::regex HttpHandler::pattern = boost::regex(PATTERN);
 
+//////////////////////////////////////////////////////////////////////////////
+
+#include <thread>
+#include <mutex>
+
+int lastId = 0;
+std::mutex mutex;
+
+std::map<int, bool> mdone;
+
+void threadFn(int id) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(10000));
+
+    mutex.lock();
+    mdone[id] = true;
+    mutex.unlock();
+}
+
+class MyHandler : public Nwg::Handler
+{
+    void sessionOpened(Nwg::Session &session)
+    {
+        int id = ++lastId;
+
+        mutex.lock();
+        mdone[id] = false;
+        mutex.unlock();
+
+        std::thread(threadFn, id).detach();
+
+        session.put<int>("id", std::make_shared<int>(id));
+        session.put<bool>("exit", std::make_shared<bool>(false));
+
+        std::shared_ptr<Nwg::ByteBuffer> out(new Nwg::ByteBuffer());
+        out->put("Please wait... [" + std::to_string(id) + "]\n");
+        out->flip();
+
+        session.write(out);
+    }
+
+    void sessionClosed(Nwg::Session &session)
+    {
+    }
+
+    void messageReceived(Nwg::Session &session, Nwg::Object &obj)
+    {
+    }
+
+    void messageSent(Nwg::Session &session, Nwg::Object &obj)
+    {
+        int id = session.get<int>("id");
+        bool &exit = session.get<bool>("exit");
+
+        bool done = false;
+
+        mutex.lock();
+        done = mdone[id];
+        mutex.unlock();
+
+        if (exit) {
+            session.close();
+            return;
+        }
+
+        if (!done) {
+            std::shared_ptr<Nwg::ByteBuffer> out(new Nwg::ByteBuffer());
+            out->put("");
+            out->flip();
+
+            session.write(out);
+            return;
+        }
+
+        std::shared_ptr<Nwg::ByteBuffer> out(new Nwg::ByteBuffer());
+        out->put("OK!\n");
+        out->flip();
+
+        session.write(out);
+
+        exit = true;
+    }
+};
+
 void run(int port)
 {
     Nwg::EventLoop eventLoop;
-    Nwg::Acceptor acceptor(&eventLoop, port);
+    Nwg::Acceptor httpAcceptor(&eventLoop, port);
+    Nwg::Acceptor tAcceptor(&eventLoop, 8850);
 
-    acceptor.setBuffSize(BUFFSIZE);
-    acceptor.setReadBuffSize(READBUFFSIZE);
-    acceptor.setProtocolCodec(std::make_shared<Nwg::BasicProtocolCodec>());
-    acceptor.setHandler(std::make_shared<HttpHandler>());
+    httpAcceptor.setBuffSize(BUFFSIZE);
+    httpAcceptor.setReadBuffSize(READBUFFSIZE);
+    httpAcceptor.setProtocolCodec(std::make_shared<Nwg::BasicProtocolCodec>());
+    httpAcceptor.setHandler(std::make_shared<HttpHandler>());
 
-    printf("Listening on port %d\n", acceptor.getPort());
-    printf("Open http://127.0.0.1:%d/\n", acceptor.getPort());
-    acceptor.listen();
+    printf("(HTTP) Listening on port %d\n", httpAcceptor.getPort());
+    printf("Open http://127.0.0.1:%d/\n", httpAcceptor.getPort());
+    httpAcceptor.listen();
+
+    tAcceptor.setProtocolCodec(std::make_shared<Nwg::BasicProtocolCodec>());
+    tAcceptor.setHandler(std::make_shared<MyHandler>());
+
+    printf("Listening on port %d\n", tAcceptor.getPort());
+    tAcceptor.listen();
 
     eventLoop.dispatch();
 }
