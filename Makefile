@@ -4,7 +4,7 @@ MAKE=make
 DFLAGS=
 CXXINCLUDEDIR=-I`pwd`/src -I`pwd`/deps/libevent/include -I`pwd`/deps/boost
 CXXFLAGS=-O2 -g -Wall -fmessage-length=0 -std=c++11 $(CXXINCLUDEDIR) $(DFLAGS)
-LIBDIR=-L`pwd`
+LIBDIR=-L`pwd`/lib
 LIBS=$(LIBDIR) -lnwg -levent -lpthread
 BOOST_BOOTSTRAP=./bootstrap.sh --with-toolset=$(TOOLSET)
 BOOSTLIBS=-lboost_regex -lboost_filesystem -lboost_system
