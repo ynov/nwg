@@ -90,9 +90,11 @@ void run(const std::string &hostname, int port)
 
     printf("Connecting to %s:%d...\n", hostname.c_str(), port);
 
-    if (!connector.connect(hostname, port, 5, true)) {
+    if (!connector.connect(hostname, port, 5)) {
         printf("Unable to connect.\n");
     }
+
+    connector.dispatch();
 }
 
 int main(int argc, char **argv)

@@ -86,7 +86,8 @@ void run()
     printf("Listening on port %d\n", acceptor.getPort());
     printf("Open http://127.0.0.1:%d/\n", acceptor.getPort());
 
-    acceptor.listen(true);
+    acceptor.listen();
+    acceptor.dispatch();
 }
 
 int main()

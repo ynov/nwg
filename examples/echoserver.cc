@@ -91,7 +91,8 @@ void run()
     acceptor.setHandler(std::make_shared<EchoHandler>());
 
     printf("Listening on port %d\n", acceptor.getPort());
-    acceptor.listen(true);
+    acceptor.listen();
+    acceptor.dispatch();
 }
 
 int main()

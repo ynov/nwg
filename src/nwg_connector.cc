@@ -29,7 +29,12 @@ struct event *Connector::getConnectorEvent()
     return _connectorEvent;
 }
 
-bool Connector::connect(const std::string &hostip, int port, int timeoutSecond, bool dispatch)
+void Connector::dispatch()
+{
+    event_base_dispatch(_base);
+}
+
+bool Connector::connect(const std::string &hostip, int port, int timeoutSecond)
 {
     struct sockaddr_in sin;
 
@@ -79,10 +84,6 @@ bool Connector::connect(const std::string &hostip, int port, int timeoutSecond, 
     _timeout->tv_usec = 0;
 
     event_add(_connectorEvent, _timeout);
-
-    if (dispatch) {
-        event_base_dispatch(_base);
-    }
 
     return true;
 }

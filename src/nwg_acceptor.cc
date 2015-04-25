@@ -33,7 +33,12 @@ Acceptor::~Acceptor()
 void Acceptor::setPort(int port) { _port = port; }
 int Acceptor::getPort() { return _port; }
 
-void Acceptor::listen(bool dispatch)
+void Acceptor::dispatch()
+{
+    event_base_dispatch(_base);
+}
+
+void Acceptor::listen()
 {
     struct sockaddr_in sin;
 
@@ -72,10 +77,6 @@ void Acceptor::listen(bool dispatch)
             (void *) _listenerEventArg);
 
     event_add(_listenerEvent, NULL);
-
-    if (dispatch) {
-        event_base_dispatch(_base);
-    }
 }
 
 } /* namespace Nwg */

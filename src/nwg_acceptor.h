@@ -17,7 +17,8 @@ public:
     void setPort(int port);
     int getPort();
 
-    void listen(bool dispatch = false);
+    void listen();
+    void dispatch();
 
 private:
     int _port;
