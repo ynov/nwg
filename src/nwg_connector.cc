@@ -50,7 +50,7 @@ bool Connector::connect(const std::string &hostname, int port, bool dispatch)
 
 #ifdef _WIN32
         errno = WSAGetLastError();
-        err_einprogress = errno == WSAEWOULDBLOCK || errno == WSAEINPROGRESS;
+        err_einprogress = errno == WSAEWOULDBLOCK;
 #endif /* _WIN32 */
 
         if (!err_einprogress) {

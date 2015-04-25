@@ -89,6 +89,34 @@ void EVCB::doConnect(evutil_socket_t fd, short event, void *arg)
     Connector &connector    = *connectorEventArg.connector;
     Handler &handler        = connector.getHandler();
 
+    char buff[16];
+    size_t result = 0;
+
+    while (1) {
+        result = recv(fd, buff, 0, 0);
+        if (result <= 0) {
+            break;
+        }
+    }
+
+    if (result < 0) {
+        bool err_conn_refused = false;
+
+#ifdef __unix__
+        err_conn_refused = errno == ECONNREFUSED;
+#endif /* __unix__ */
+
+#ifdef _WIN32
+        errno = WSAGetLastError();
+        err_conn_refused = errno == WSAECONNREFUSED;
+#endif /* _WIN32 */
+
+        if (err_conn_refused) {
+            perror("read()");
+            return;
+        }
+    }
+
     Session *session = new Session(connector.getBuffSize(), base, fd, &connector);
     session->resetWrite();
 
