@@ -5,8 +5,6 @@
 #include "nwg_connector.h"
 #include "nwg_evcb.h"
 
-#include <arpa/inet.h>
-
 namespace Nwg
 {
 
@@ -44,8 +42,20 @@ bool Connector::connect(const std::string &hostname, int port, bool dispatch)
     evutil_make_socket_nonblocking(_serverFd);
 
     if (::connect(_serverFd, (struct sockaddr *) &sin, sizeof(sin)) < 0) {
-        if (errno != EINPROGRESS) {
+        bool err_einprogress = false;
+
+#ifdef __unix__
+        err_einprogress = errno == EINPROGRESS;
+#endif /* __unix__ */
+
+#ifdef _WIN32
+        errno = WSAGetLastError();
+        err_einprogress = errno == WSAEWOULDBLOCK || errno == WSAEINPROGRESS;
+#endif /* _WIN32 */
+
+        if (!err_einprogress) {
             perror("connect()");
+            printf("errno = %d\n", errno);
             return false;
         }
     }
