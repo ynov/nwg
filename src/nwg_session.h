@@ -49,10 +49,6 @@ public:
     struct event *readEvent = nullptr;
     struct event *writeEvent = nullptr;
 
-    bool x_manual = false;
-
-    std::function<void(bool &wait)> waitFunction;
-
     template<class T>
     void put(const std::string &key, const std::shared_ptr<T> &val)
     {

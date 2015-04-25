@@ -69,10 +69,6 @@ void EVCB::doAccept(evutil_socket_t listener, short event, void *arg)
             return;
         }
 
-        if (session->x_manual) {
-            return;
-        }
-
         if (session->isWriteObjectPresent()) {
             event_add(session->writeEvent, NULL);
         } else {
@@ -233,10 +229,6 @@ void EVCB::doRead(evutil_socket_t fd, short events, void *arg)
         return;
     }
 
-    if (session->x_manual) {
-        return;
-    }
-
     if (session->isWriteObjectPresent()) {
         if (session->stillReading) {
             // TODO: throw error
@@ -331,10 +323,6 @@ void EVCB::doWrite(evutil_socket_t fd, short events, void *arg)
 
         _dprintf("D-- %40s --\n", "doWrite() OUT (closed)");
         delete session;
-        return;
-    }
-
-    if (session->x_manual) {
         return;
     }
 
