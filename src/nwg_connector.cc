@@ -3,13 +3,14 @@
 #include <cstring>
 
 #include "nwg_connector.h"
+#include "nwg_eventloop.h"
 #include "nwg_evcb.h"
 
 namespace Nwg
 {
 
-Connector::Connector(const Service *service)
-    : Service(service),
+Connector::Connector(EventLoop *eventLoop)
+    : Service(eventLoop),
       _serverFd(-1),
       _connectorEvent(nullptr),
       _connectorEventArg(nullptr),
@@ -27,11 +28,6 @@ Connector::~Connector()
 struct event *Connector::getConnectorEvent()
 {
     return _connectorEvent;
-}
-
-void Connector::dispatch()
-{
-    event_base_dispatch(_base);
 }
 
 bool Connector::connect(const std::string &hostip, int port, int timeoutSecond)
@@ -69,11 +65,13 @@ bool Connector::connect(const std::string &hostip, int port, int timeoutSecond)
         }
     }
 
+    struct event_base *base = _eventLoop->getBase();
+
     _connectorEventArg = new ConnectorEventArg();
-    _connectorEventArg->base      = _base;
+    _connectorEventArg->base      = base;
     _connectorEventArg->connector = this;
 
-    _connectorEvent = event_new(_base, _serverFd,
+    _connectorEvent = event_new(base, _serverFd,
             EV_READ | EV_WRITE,
             EVCB::doConnect,
             (void *) _connectorEventArg);

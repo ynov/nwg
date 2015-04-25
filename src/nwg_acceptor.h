@@ -8,17 +8,18 @@ namespace Nwg
 
 struct ListenerEventArg;
 
+class EventLoop;
+
 class Acceptor : public Service
 {
 public:
-    Acceptor(int port, const Service *service = nullptr);
+    Acceptor(int port, EventLoop *eventLoop);
     virtual ~Acceptor();
 
     void setPort(int port);
     int getPort();
 
     void listen();
-    void dispatch();
 
 private:
     int _port;

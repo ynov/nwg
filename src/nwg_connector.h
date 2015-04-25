@@ -11,12 +11,11 @@ struct ConnectorEventArg;
 class Connector : public Service
 {
 public:
-    Connector(const Service *service = nullptr);
+    Connector(EventLoop *eventLoop);
     virtual ~Connector();
 
     struct event *getConnectorEvent();
     bool connect(const std::string &hostip, int port, int timeoutSecond = 5);
-    void dispatch();
 
 private:
     evutil_socket_t _serverFd;

@@ -36,12 +36,14 @@
 namespace Nwg
 {
 
+class EventLoop;
+
 class ProtocolCodec;
 
 class Service : public Object
 {
 public:
-    Service(const Service *service = nullptr);
+    Service(EventLoop *eventLoop);
     virtual ~Service();
 
     void setBuffSize(int buffsize);
@@ -50,7 +52,7 @@ public:
     void setProtocolCodec(const std::shared_ptr<ProtocolCodec> &protocolCodec);
     void setHandler(const std::shared_ptr<Handler> &handler);
 
-    struct event_base *getBase() const;
+    EventLoop *getEventLoop() const;
     size_t getBuffSize();
     size_t getReadBuffSize();
 
@@ -58,7 +60,7 @@ public:
     ProtocolCodec &getProtocolCodec();
 
 protected:
-    struct event_base *_base;
+    EventLoop *_eventLoop;
 
     size_t _buffSize = DEFAULT_BUFFSIZE;
     size_t _readBuffSize = DEFAULT_READBUFFSIZE;

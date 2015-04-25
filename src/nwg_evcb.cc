@@ -189,7 +189,7 @@ void EVCB::doRead(evutil_socket_t fd, short events, void *arg)
 #ifdef _WIN32
         errno = WSAGetLastError();
         err_eagain = errno == WSAEWOULDBLOCK;
-        err_econcrefused = errno == WSAECONNREFUSED;
+        err_econnrefused = errno == WSAECONNREFUSED;
 #endif /* _W32 */
 
         if (!err_eagain) {

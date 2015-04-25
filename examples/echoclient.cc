@@ -82,19 +82,19 @@ class EchoClientHandler : public Nwg::Handler
 
 void run(const std::string &hostname, int port)
 {
-    Nwg::Connector connector;
+    Nwg::EventLoop eventLoop;
+    Nwg::Connector connector(&eventLoop);
 
     connector.setBuffSize(BUFFSIZE);
     connector.setProtocolCodec(std::make_shared<Nwg::BasicProtocolCodec>());
     connector.setHandler(std::make_shared<EchoClientHandler>());
 
     printf("Connecting to %s:%d...\n", hostname.c_str(), port);
-
     if (!connector.connect(hostname, port, 5)) {
         printf("Unable to connect.\n");
     }
 
-    connector.dispatch();
+    eventLoop.dispatch();
 }
 
 int main(int argc, char **argv)

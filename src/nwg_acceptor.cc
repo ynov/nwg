@@ -3,13 +3,15 @@
 #include <cstring>
 
 #include "nwg_acceptor.h"
+#include "nwg_eventloop.h"
+
 #include "nwg_evcb.h"
 
 namespace Nwg
 {
 
-Acceptor::Acceptor(int port, const Service *service)
-    : Service(service),
+Acceptor::Acceptor(int port, EventLoop *eventLoop)
+    : Service(eventLoop),
       _port(port),
       _listenerFd(-1),
       _listenerEvent(nullptr),
@@ -32,11 +34,6 @@ Acceptor::~Acceptor()
 
 void Acceptor::setPort(int port) { _port = port; }
 int Acceptor::getPort() { return _port; }
-
-void Acceptor::dispatch()
-{
-    event_base_dispatch(_base);
-}
 
 void Acceptor::listen()
 {
@@ -67,11 +64,13 @@ void Acceptor::listen()
         return;
     }
 
+    struct event_base *base = _eventLoop->getBase();
+
     _listenerEventArg = new ListenerEventArg();
-    _listenerEventArg->base     = _base;
+    _listenerEventArg->base     = base;
     _listenerEventArg->acceptor = this;
 
-    _listenerEvent = event_new(_base, _listenerFd,
+    _listenerEvent = event_new(base, _listenerFd,
             EV_READ | EV_PERSIST,
             EVCB::doAccept,
             (void *) _listenerEventArg);

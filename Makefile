@@ -35,6 +35,7 @@ lib/libnwg.a: \
 	nwg_protocolcodec.o \
 	nwg_basicprotocolcodec.o \
 	nwg_handler.o \
+	nwg_eventloop.o \
 	nwg_service.o \
 	nwg_acceptor.o \
 	nwg_connector.o \

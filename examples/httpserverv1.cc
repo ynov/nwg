@@ -77,17 +77,18 @@ class HttpHandler : public Nwg::Handler
 
 void run()
 {
-    Nwg::Acceptor acceptor(8840);
-    acceptor.setBuffSize(BUFFSIZE);
+    Nwg::EventLoop eventLoop;
+    Nwg::Acceptor acceptor(8840, &eventLoop);
 
+    acceptor.setBuffSize(BUFFSIZE);
     acceptor.setProtocolCodec(std::make_shared<Nwg::BasicProtocolCodec>());
     acceptor.setHandler(std::make_shared<HttpHandler>());
 
     printf("Listening on port %d\n", acceptor.getPort());
     printf("Open http://127.0.0.1:%d/\n", acceptor.getPort());
-
     acceptor.listen();
-    acceptor.dispatch();
+
+    eventLoop.dispatch();
 }
 
 int main()

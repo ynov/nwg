@@ -84,15 +84,17 @@ class EchoHandler : public Nwg::Handler
 
 void run()
 {
-    Nwg::Acceptor acceptor(8845);
-    acceptor.setBuffSize(BUFFSIZE);
+    Nwg::EventLoop eventLoop;
+    Nwg::Acceptor acceptor(8845, &eventLoop);
 
+    acceptor.setBuffSize(BUFFSIZE);
     acceptor.setProtocolCodec(std::make_shared<Nwg::BasicProtocolCodec>());
     acceptor.setHandler(std::make_shared<EchoHandler>());
 
     printf("Listening on port %d\n", acceptor.getPort());
     acceptor.listen();
-    acceptor.dispatch();
+
+    eventLoop.dispatch();
 }
 
 int main()
