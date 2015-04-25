@@ -80,7 +80,7 @@ class EchoClientHandler : public Nwg::Handler
     }
 };
 
-void run(const std::string &hostname, int port)
+void run(const std::string &hostip, int port)
 {
     Nwg::EventLoop eventLoop;
     Nwg::Connector connector(&eventLoop);
@@ -89,8 +89,8 @@ void run(const std::string &hostname, int port)
     connector.setProtocolCodec(std::make_shared<Nwg::BasicProtocolCodec>());
     connector.setHandler(std::make_shared<EchoClientHandler>());
 
-    printf("Connecting to %s:%d...\n", hostname.c_str(), port);
-    if (!connector.connect(hostname, port, 5)) {
+    printf("Connecting to %s:%d...\n", hostip.c_str(), port);
+    if (!connector.connect(hostip, port, 5)) {
         printf("Unable to connect.\n");
     }
 
@@ -99,7 +99,7 @@ void run(const std::string &hostname, int port)
 
 int main(int argc, char **argv)
 {
-    std::string hostname = [&]() -> const char * {
+    std::string hostip = [&]() -> const char * {
        if (argc > 1) {
            return argv[1];
        } else {
@@ -115,6 +115,6 @@ int main(int argc, char **argv)
         }
     }();
 
-    run(hostname, port);
+    run(hostip, port);
     return 0;
 }

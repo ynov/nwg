@@ -13,7 +13,7 @@ class EventLoop;
 class Acceptor : public Service
 {
 public:
-    Acceptor(int port, EventLoop *eventLoop);
+    Acceptor(EventLoop *eventLoop, int port = 1024);
     virtual ~Acceptor();
 
     void setPort(int port);

@@ -10,7 +10,7 @@
 namespace Nwg
 {
 
-Acceptor::Acceptor(int port, EventLoop *eventLoop)
+Acceptor::Acceptor(EventLoop *eventLoop, int port)
     : Service(eventLoop),
       _port(port),
       _listenerFd(-1),

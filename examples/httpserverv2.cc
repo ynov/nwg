@@ -279,7 +279,7 @@ boost::regex HttpHandler::pattern = boost::regex(PATTERN);
 void run(int port)
 {
     Nwg::EventLoop eventLoop;
-    Nwg::Acceptor acceptor(port, &eventLoop);
+    Nwg::Acceptor acceptor(&eventLoop, port);
 
     acceptor.setBuffSize(BUFFSIZE);
     acceptor.setReadBuffSize(READBUFFSIZE);
@@ -297,14 +297,12 @@ int main(int argc, char **argv)
 {
     workingPath = absolute(current_path());
 
-    int port = [=]() {
+    run([&]() -> int {
         if (argc > 1) {
             return std::stoi(argv[1]);
         } else {
             return 8840;
         }
-    }();
-
-    run(port);
+    }());
     return 0;
 }

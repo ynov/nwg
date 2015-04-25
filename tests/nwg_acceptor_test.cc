@@ -33,7 +33,7 @@ class DummyHandler : public Nwg::Handler
 class DummyAcceptor : public Nwg::Acceptor
 {
 public:
-    DummyAcceptor() : Nwg::Acceptor(8845, nullptr) {}
+    DummyAcceptor() : Nwg::Acceptor(nullptr) {}
 
     void wtf()
     {

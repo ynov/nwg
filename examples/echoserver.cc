@@ -82,10 +82,10 @@ class EchoHandler : public Nwg::Handler
     }
 };
 
-void run()
+void run(int port)
 {
     Nwg::EventLoop eventLoop;
-    Nwg::Acceptor acceptor(8845, &eventLoop);
+    Nwg::Acceptor acceptor(&eventLoop, port);
 
     acceptor.setBuffSize(BUFFSIZE);
     acceptor.setProtocolCodec(std::make_shared<Nwg::BasicProtocolCodec>());
@@ -97,8 +97,14 @@ void run()
     eventLoop.dispatch();
 }
 
-int main()
+int main(int argc, char **argv)
 {
-    run();
+    run([&]() -> int {
+        if (argc > 1) {
+            return std::stoi(argv[1]);
+        } else {
+            return 8840;
+        }
+    }());
     return 0;
 }
