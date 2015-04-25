@@ -28,7 +28,8 @@
 #define NWG_ECONNREFUSED 1
 #define NWG_EREAD        2
 #define NWG_EWRITE       3
-#define NWG_EUNKNOWN     4
+#define NWG_ETIMEOUT     4
+#define NWG_EUNKNOWN     5
 
 #include "nwg_handler.h"
 

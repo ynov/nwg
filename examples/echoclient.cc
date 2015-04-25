@@ -13,7 +13,7 @@ class EchoClientHandler : public Nwg::Handler
 {
     void sessionOpened(Nwg::Session &session)
     {
-        printf("Connected!\n");
+        printf("Session opened!\n");
     }
 
     void messageReceived(Nwg::Session &session, Nwg::Object &obj)
@@ -63,13 +63,19 @@ class EchoClientHandler : public Nwg::Handler
 
     void sessionClosed(Nwg::Session &session)
     {
-        printf("Disconnected!\n");
+        printf("Session closed!\n");
     }
 
-    void errorCaught(Nwg::Session &session, int errorCode)
+    void errorCaught(Nwg::Session &session, int errorCode, int errNo)
     {
-        if (errorCode == NWG_ECONNREFUSED) {
-            printf("Connection refused!\n");
+        switch (errorCode)
+        {
+        case NWG_ECONNREFUSED:
+            printf("Connection refused! errNo = %d\n", errNo);
+            break;
+        default:
+            printf("ERROR caught! errorCode = %d; errNo = %d\n", errorCode, errNo);
+            break;
         }
     }
 };
@@ -84,7 +90,7 @@ void run(const std::string &hostname, int port)
 
     printf("Connecting to %s:%d...\n", hostname.c_str(), port);
 
-    if (!connector.connect(hostname, port, true)) {
+    if (!connector.connect(hostname, port, 5, true)) {
         printf("Unable to connect.\n");
     }
 }

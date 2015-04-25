@@ -12,12 +12,16 @@ Connector::Connector(const Service *service)
     : Service(service),
       _serverFd(-1),
       _connectorEvent(nullptr),
-      _connectorEventArg(nullptr)
+      _connectorEventArg(nullptr),
+      _timeout(nullptr)
 {
 }
 
 Connector::~Connector()
 {
+    if (_timeout != nullptr) {
+        delete _timeout;
+    }
 }
 
 struct event *Connector::getConnectorEvent()
@@ -25,7 +29,7 @@ struct event *Connector::getConnectorEvent()
     return _connectorEvent;
 }
 
-bool Connector::connect(const std::string &hostip, int port, bool dispatch)
+bool Connector::connect(const std::string &hostip, int port, int timeoutSecond, bool dispatch)
 {
     struct sockaddr_in sin;
 
@@ -69,7 +73,12 @@ bool Connector::connect(const std::string &hostip, int port, bool dispatch)
             EVCB::doConnect,
             (void *) _connectorEventArg);
 
-    event_add(_connectorEvent, NULL);
+    _timeout = new struct timeval;
+
+    _timeout->tv_sec  = timeoutSecond;
+    _timeout->tv_usec = 0;
+
+    event_add(_connectorEvent, _timeout);
 
     if (dispatch) {
         event_base_dispatch(_base);

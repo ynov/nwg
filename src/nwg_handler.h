@@ -18,7 +18,7 @@ public:
     virtual void sessionClosed(Session &session);
     virtual void messageReceived(Session &session, Object &message);
     virtual void messageSent(Session &session, Object &message);
-    virtual void errorCaught(Session &session, int errorCode);
+    virtual void errorCaught(Session &session, int errorCode, int errNo=-1);
 };
 
 } /* namespace Nwg */

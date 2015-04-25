@@ -93,44 +93,27 @@ void EVCB::doConnect(evutil_socket_t fd, short event, void *arg)
     session->resetWrite();
 
 #ifdef _WIN32
-    if (WSAGetLastError() != 0) {
+    errno = WSAGetLastError();
+    if (errno != 0) {
         fprintf(stderr, "Unable to establish connection.\n");
 
-        handler.errorCaught(*session, NWG_ECONNREFUSED);
+        handler.errorCaught(*session, NWG_ECONNREFUSED, errno);
 
         close(fd);
 
         delete session;
         return;
     }
-#else
-    char buff[16];
-    size_t result = 0;
+#endif /* _WIN32 */
 
-    while (1) {
-        result = recv(fd, buff, 0, 0);
-        if (result <= 0) {
-            break;
-        }
+    if (event == EV_TIMEOUT) {
+        handler.errorCaught(*session, NWG_ETIMEOUT, errno);
+
+        close(fd);
+
+        delete session;
+        return;
     }
-
-    do {
-        bool err_conn_refused = false;
-
-        err_conn_refused = errno == ECONNREFUSED;
-
-        if (err_conn_refused) {
-            perror("read()");
-
-            handler.errorCaught(*session, NWG_ECONNREFUSED);
-
-            close(fd);
-
-            delete session;
-            return;
-        }
-    } while(0);
-#endif
 
     handler.sessionOpened(*session);
 
@@ -196,19 +179,25 @@ void EVCB::doRead(evutil_socket_t fd, short events, void *arg)
         session->stillReading = false;
 
         bool err_eagain = false;
+        bool err_econnrefused = false;
 
 #ifdef __unix__
         err_eagain = (errno == EAGAIN || errno == EWOULDBLOCK);
+        err_econnrefused = errno == ECONNREFUSED;
 #endif /* __unix__ */
 
 #ifdef _WIN32
-        err_eagain = WSAGetLastError() == WSAEWOULDBLOCK;
         errno = WSAGetLastError();
+        err_eagain = errno == WSAEWOULDBLOCK;
+        err_econcrefused = errno == WSAECONNREFUSED;
 #endif /* _W32 */
 
         if (!err_eagain) {
-            // TODO: throw error
-            handler.errorCaught(*session, NWG_EREAD);
+            if (err_econnrefused) {
+                handler.errorCaught(*session, NWG_ECONNREFUSED, errno);
+            } else {
+                handler.errorCaught(*session, NWG_EREAD, errno);
+            }
 
             perror("recv()");
             close(fd);
@@ -289,7 +278,7 @@ void EVCB::doWrite(evutil_socket_t fd, short events, void *arg)
                 _dprintf("DDDD-- errno == EAGAIN (OK)\n");
                 return;
             } else {
-                handler.errorCaught(*session, NWG_EWRITE);
+                handler.errorCaught(*session, NWG_EWRITE, errno);
 
                 close(fd);
                 event_del(session->writeEvent);
@@ -307,7 +296,7 @@ void EVCB::doWrite(evutil_socket_t fd, short events, void *arg)
     }
 
     if (session->nWritten != writeBuffer.limit()) {
-        handler.errorCaught(*session, NWG_EUNKNOWN);
+        handler.errorCaught(*session, NWG_EUNKNOWN, errno);
 
         close(fd);
         event_del(session->writeEvent);

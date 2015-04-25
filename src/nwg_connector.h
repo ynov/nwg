@@ -15,12 +15,13 @@ public:
     virtual ~Connector();
 
     struct event *getConnectorEvent();
-    bool connect(const std::string &hostip, int port, bool dispatch = false);
+    bool connect(const std::string &hostip, int port, int timeoutSecond = 5, bool dispatch = false);
 
 private:
     evutil_socket_t _serverFd;
     struct event *_connectorEvent;
     ConnectorEventArg *_connectorEventArg;
+    struct timeval *_timeout;
 };
 
 struct ConnectorEventArg

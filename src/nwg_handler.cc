@@ -28,7 +28,7 @@ void Handler::messageSent(Session &session, Object &message)
 {
 }
 
-void Handler::errorCaught(Session &session, int errorCode)
+void Handler::errorCaught(Session &session, int errorCode, int errNo)
 {
 }
 
