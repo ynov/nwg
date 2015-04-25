@@ -99,7 +99,7 @@ void EVCB::doConnect(evutil_socket_t fd, short event, void *arg)
         }
     }
 
-    if (result < 0) {
+    do {
         bool err_conn_refused = false;
 
 #ifdef __unix__
@@ -115,7 +115,7 @@ void EVCB::doConnect(evutil_socket_t fd, short event, void *arg)
             perror("read()");
             return;
         }
-    }
+    } while(0);
 
     Session *session = new Session(connector.getBuffSize(), base, fd, &connector);
     session->resetWrite();
