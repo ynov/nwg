@@ -25,7 +25,7 @@ struct event *Connector::getConnectorEvent()
     return _connectorEvent;
 }
 
-bool Connector::connect(const std::string &hostname, int port, bool dispatch)
+bool Connector::connect(const std::string &hostip, int port, bool dispatch)
 {
     struct sockaddr_in sin;
 
@@ -33,7 +33,7 @@ bool Connector::connect(const std::string &hostname, int port, bool dispatch)
     sin.sin_family = AF_INET;
     sin.sin_port   = htons(port);
 
-    if (::inet_pton(AF_INET, hostname.c_str(), &sin.sin_addr) <= 0) {
+    if (::inet_pton(AF_INET, hostip.c_str(), &sin.sin_addr) <= 0) {
         perror("inet_pton()");
         return false;
     }

@@ -15,7 +15,7 @@ public:
     virtual ~Connector();
 
     struct event *getConnectorEvent();
-    bool connect(const std::string &hostname, int port, bool dispatch = false);
+    bool connect(const std::string &hostip, int port, bool dispatch = false);
 
 private:
     evutil_socket_t _serverFd;
