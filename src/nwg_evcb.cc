@@ -335,4 +335,3 @@ void EVCB::doWrite(evutil_socket_t fd, short events, void *arg)
 }
 
 } /* namespace Nwg */
-

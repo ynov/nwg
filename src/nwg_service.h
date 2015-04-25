@@ -40,7 +40,7 @@ class EventLoop;
 
 class ProtocolCodec;
 
-class Service : public Object
+class Service
 {
 public:
     Service(EventLoop *eventLoop);

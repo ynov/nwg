@@ -8,7 +8,7 @@ namespace Nwg
 
 class Session;
 
-class Handler: public Object
+class Handler
 {
 public:
     Handler();

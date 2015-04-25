@@ -1,7 +1,6 @@
 #ifndef NWG_PROTOCOLCODEC_H_
 #define NWG_PROTOCOLCODEC_H_
 
-#include "nwg_object.h"
 #include "nwg_objectcontainer.h"
 
 namespace Nwg
@@ -9,7 +8,7 @@ namespace Nwg
 
 class ByteBuffer;
 
-class ProtocolCodec: public Object
+class ProtocolCodec
 {
 public:
     ProtocolCodec();

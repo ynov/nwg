@@ -14,7 +14,7 @@ namespace Nwg
 
 class Service;
 
-class Session: public Object
+class Session
 {
 public:
     Session(int bufferAllocationSize);
