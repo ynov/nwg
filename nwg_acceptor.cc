@@ -23,7 +23,10 @@ Acceptor::~Acceptor()
         delete _listenerEventArg;
     }
 
-    event_del(_listenerEvent);
+    if (_listenerEvent != nullptr) {
+        event_del(_listenerEvent);
+    }
+
     ::close(_listenerFd);
 }
 
