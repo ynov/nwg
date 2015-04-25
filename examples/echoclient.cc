@@ -67,11 +67,8 @@ class EchoClientHandler : public Nwg::Handler
     }
 };
 
-void run()
+void run(const std::string &hostname, int port)
 {
-    std::string hostname = "127.0.0.1";
-    int port = 8845;
-
     Nwg::Connector connector;
 
     connector.setBuffSize(BUFFSIZE);
@@ -85,8 +82,24 @@ void run()
     }
 }
 
-int main()
+int main(int argc, char **argv)
 {
-    run();
+    std::string hostname = [&]() -> const char * {
+       if (argc > 1) {
+           return argv[1];
+       } else {
+           return "127.0.0.1";
+       }
+    }();
+
+    int port = [&]() {
+        if (argc > 2) {
+            return std::stoi(argv[2]);
+        } else {
+            return 8845;
+        }
+    }();
+
+    run(hostname, port);
     return 0;
 }
