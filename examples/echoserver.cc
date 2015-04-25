@@ -3,7 +3,7 @@
 #include <nwg.h>
 #include <nwg_basicprotocolcodec.h>
 
-#define BUFFSIZE 32768
+#define BUFFSIZE SZ_32KB
 #define MAX_CLIENT 5
 
 static int numClient = 0;
@@ -91,7 +91,7 @@ void run()
     acceptor.setHandler(std::make_shared<EchoHandler>());
 
     printf("Listening on port %d\n", acceptor.getPort());
-    acceptor.listen();
+    acceptor.listen(true);
 }
 
 int main()

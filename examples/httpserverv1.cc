@@ -3,7 +3,7 @@
 #include <nwg.h>
 #include <nwg_basicprotocolcodec.h>
 
-#define BUFFSIZE 32768
+#define BUFFSIZE SZ_32KB
 
 #ifndef SILENT
 #define SILENT 1
@@ -86,7 +86,7 @@ void run()
     printf("Listening on port %d\n", acceptor.getPort());
     printf("Open http://127.0.0.1:%d/\n", acceptor.getPort());
 
-    acceptor.listen();
+    acceptor.listen(true);
 }
 
 int main()
