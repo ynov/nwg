@@ -10,14 +10,12 @@
 int lastId = 0;
 std::mutex mutex;
 
-std::map<int, struct event *> mevent;
 std::map<int, bool> mdone;
 
 void fn(int id) {
     std::this_thread::sleep_for(std::chrono::milliseconds(2500));
 
     mutex.lock();
-    event_add(mevent[id], NULL);
     mdone[id] = true;
     mutex.unlock();
 }
@@ -29,7 +27,6 @@ class MyHandler : public Nwg::Handler
         int id = ++lastId;
 
         mutex.lock();
-        mevent[id] = session.writeEvent;
         mdone[id] = false;
         mutex.unlock();
 
@@ -55,7 +52,6 @@ class MyHandler : public Nwg::Handler
 
     void messageSent(Nwg::Session &session, Nwg::Object &obj)
     {
-        printf("Got here!\n");
         int id = session.get<int>("id");
         bool &exit = session.get<bool>("exit");
 
@@ -66,17 +62,19 @@ class MyHandler : public Nwg::Handler
         mutex.unlock();
 
         if (exit) {
+            printf("Close!\n");
             session.close();
             return;
         }
 
         if (!done) {
-            event_del(session.writeEvent);
-            session.x_manual = true;
+            std::shared_ptr<Nwg::ByteBuffer> out(new Nwg::ByteBuffer());
+            out->put("");
+            out->flip();
+
+            session.write(out);
             return;
         }
-
-        session.x_manual = false;
 
         std::shared_ptr<Nwg::ByteBuffer> out(new Nwg::ByteBuffer());
         out->put("OK!\n");
@@ -90,13 +88,16 @@ class MyHandler : public Nwg::Handler
 
 void run()
 {
-    Nwg::Acceptor acceptor(8850);
+    Nwg::EventLoop eventLoop;
+    Nwg::Acceptor acceptor(&eventLoop, 8850);
 
     acceptor.setProtocolCodec(std::make_shared<Nwg::BasicProtocolCodec>());
     acceptor.setHandler(std::make_shared<MyHandler>());
 
     printf("Listening on port %d\n", acceptor.getPort());
     acceptor.listen();
+
+    eventLoop.dispatch();
 }
 
 int main()
