@@ -65,6 +65,13 @@ class EchoClientHandler : public Nwg::Handler
     {
         printf("Disconnected!\n");
     }
+
+    void errorCaught(Nwg::Session &session, int errorCode)
+    {
+        if (errorCode == NWG_ECONNREFUSED) {
+            printf("Connection refused!\n");
+        }
+    }
 };
 
 void run(const std::string &hostname, int port)

@@ -25,6 +25,11 @@
 #define DEFAULT_BUFFSIZE     SZ_32KB
 #define DEFAULT_READBUFFSIZE SZ_1MB
 
+#define NWG_ECONNREFUSED 1
+#define NWG_EREAD        2
+#define NWG_EWRITE       3
+#define NWG_EUNKNOWN     4
+
 #include "nwg_handler.h"
 
 namespace Nwg

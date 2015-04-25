@@ -28,4 +28,8 @@ void Handler::messageSent(Session &session, Object &message)
 {
 }
 
+void Handler::errorCaught(Session &session, int errorCode)
+{
+}
+
 } /* namespace Nwg */

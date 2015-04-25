@@ -89,9 +89,18 @@ void EVCB::doConnect(evutil_socket_t fd, short event, void *arg)
     Connector &connector    = *connectorEventArg.connector;
     Handler &handler        = connector.getHandler();
 
+    Session *session = new Session(connector.getBuffSize(), base, fd, &connector);
+    session->resetWrite();
+
 #ifdef _WIN32
     if (WSAGetLastError() != 0) {
         fprintf(stderr, "Unable to establish connection.\n");
+
+        handler.errorCaught(*session, NWG_ECONNREFUSED);
+
+        close(fd);
+
+        delete session;
         return;
     }
 #else
@@ -110,16 +119,18 @@ void EVCB::doConnect(evutil_socket_t fd, short event, void *arg)
 
         err_conn_refused = errno == ECONNREFUSED;
 
-
         if (err_conn_refused) {
             perror("read()");
+
+            handler.errorCaught(*session, NWG_ECONNREFUSED);
+
+            close(fd);
+
+            delete session;
             return;
         }
     } while(0);
 #endif
-
-    Session *session = new Session(connector.getBuffSize(), base, fd, &connector);
-    session->resetWrite();
 
     handler.sessionOpened(*session);
 
@@ -197,9 +208,12 @@ void EVCB::doRead(evutil_socket_t fd, short events, void *arg)
 
         if (!err_eagain) {
             // TODO: throw error
-            handler.sessionClosed(*session);
+            handler.errorCaught(*session, NWG_EREAD);
 
             perror("recv()");
+            close(fd);
+
+            handler.sessionClosed(*session);
 
             _dprintf("D-- %40s --\n", "doRead() OUT (closed, err_not_eagain)");
             _dprintf("DDDD-- errno == %d\n", errno);
@@ -275,8 +289,15 @@ void EVCB::doWrite(evutil_socket_t fd, short events, void *arg)
                 _dprintf("DDDD-- errno == EAGAIN (OK)\n");
                 return;
             } else {
-                // TODO: throw error
+                handler.errorCaught(*session, NWG_EWRITE);
+
+                close(fd);
+                event_del(session->writeEvent);
+
+                handler.sessionClosed(*session);
+
                 _dprintf("DDDD-- errno IS NOT EAGAIN, errno = %d\n", errno);
+                delete session;
                 return;
             }
         }
@@ -286,9 +307,16 @@ void EVCB::doWrite(evutil_socket_t fd, short events, void *arg)
     }
 
     if (session->nWritten != writeBuffer.limit()) {
-        // TODO: throw error
+        handler.errorCaught(*session, NWG_EUNKNOWN);
+
+        close(fd);
+        event_del(session->writeEvent);
+
+        handler.sessionClosed(*session);
+
         _dprintf("DDDD-- it suddenly goes here...\n");
         _dprintf("DDDD-- session.nWritten == %d, writeBuffer.limit() == %d\n", (int) session->nWritten, (int) writeBuffer.limit());
+        delete session;
         return;
     }
 
