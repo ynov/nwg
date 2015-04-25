@@ -23,6 +23,7 @@ tests: libnwg.a \
 
 examples: libnwg.a \
 	examples/exm_echoserver \
+	examples/exm_echoclient \
 	examples/exm_httpserverv1 \
 	examples/exm_httpserverv2
 

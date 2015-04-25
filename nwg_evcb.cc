@@ -8,6 +8,7 @@
 #include <cerrno>
 
 #include "nwg_acceptor.h"
+#include "nwg_connector.h"
 #include "nwg_object.h"
 #include "nwg_objectcontainer.h"
 #include "nwg_bytebuffer.h"
@@ -76,6 +77,41 @@ void EVCB::doAccept(evutil_socket_t listener, short event, void *arg)
     }
 
     _dprintf("D-- %40s --\n", "doAccept() OUT");
+}
+
+void EVCB::doConnect(evutil_socket_t fd, short event, void *arg)
+{
+    _dprintf("D-- %40s --\n", "doConnect() IN");
+
+    ConnectorEventArg &connectorEventArg = *(ConnectorEventArg *) arg;
+
+    struct event_base *base = connectorEventArg.base;
+    Connector &connector    = *connectorEventArg.connector;
+    Handler &handler        = connector.getHandler();
+
+    Session *session = new Session(connector.getBuffSize(), base, fd, &connector);
+    session->resetWrite();
+
+    handler.sessionOpened(*session);
+
+    if (session->isClosed()) {
+        close(fd);
+
+        handler.sessionClosed(*session);
+
+        delete session;
+        return;
+    }
+
+    if (session->isWriteObjectPresent()) {
+        event_add(session->writeEvent, NULL);
+    } else {
+        event_add(session->readEvent, NULL);
+    }
+
+    event_del(connector.getConnectorEvent());
+
+    _dprintf("D-- %40s --\n", "doConnect() OUT");
 }
 
 void EVCB::doRead(evutil_socket_t fd, short events, void *arg)

@@ -5,10 +5,6 @@
 #include "nwg_acceptor.h"
 #include "nwg_evcb.h"
 
-#include "nwg_object.h"
-#include "nwg_handler.h"
-#include "nwg_protocolcodec.h"
-
 namespace Nwg
 {
 
