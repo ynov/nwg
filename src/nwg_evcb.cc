@@ -109,8 +109,6 @@ void EVCB::doConnect(evutil_socket_t fd, short event, void *arg)
         event_add(session->readEvent, NULL);
     }
 
-    event_del(connector.getConnectorEvent());
-
     _dprintf("D-- %40s --\n", "doConnect() OUT");
 }
 

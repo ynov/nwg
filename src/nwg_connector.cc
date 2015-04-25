@@ -65,7 +65,7 @@ bool Connector::connect(const std::string &hostname, int port, bool dispatch)
     _connectorEventArg->connector = this;
 
     _connectorEvent = event_new(_base, _serverFd,
-            EV_READ | EV_PERSIST,
+            EV_READ | EV_WRITE,
             EVCB::doConnect,
             (void *) _connectorEventArg);
 
