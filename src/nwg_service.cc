@@ -1,6 +1,7 @@
 #include "nwg_service.h"
 
 #include "nwg_eventloop.h"
+#include "nwg_basicprotocolcodec.h"
 
 namespace Nwg
 {
@@ -38,6 +39,9 @@ size_t Service::getReadBuffSize() { return _readBuffSize; }
 
 ProtocolCodec &Service::getProtocolCodec()
 {
+    if (_protocolCodec == nullptr) {
+        _protocolCodec = std::make_shared<Nwg::BasicProtocolCodec>();
+    }
     return *_protocolCodec;
 }
 
