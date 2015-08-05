@@ -25,7 +25,9 @@ examples: lib/libnwg.a \
 	examples/exm_echoserver \
 	examples/exm_echoclient \
 	examples/exm_httpserverv1 \
-	examples/exm_httpserverv2
+	examples/exm_httpserverv2 \
+	examples/exm_httpserverv3 \
+	examples/exm_ftpserver
 
 lib/libnwg.a: \
 	nwg_messagebuffer.o \
