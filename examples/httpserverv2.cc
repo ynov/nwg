@@ -31,7 +31,7 @@ using namespace boost::filesystem;
 static int numReq = 0;
 static path workingPath;
 
-struct SessionState : public Nwg::Object {
+struct SessionState {
     int reqNo             = 0;
     size_t nwritten       = 0;
     size_t length         = 0;
@@ -40,7 +40,7 @@ struct SessionState : public Nwg::Object {
 };
 
 #define STATE "STATE"
-#define GETMSG(obj) dynamic_cast<Nwg::ByteBuffer &>(obj)
+#define GETMSG(obj) dynamic_cast<Nwg::MessageBuffer &>(obj)
 #define GETSTATE(session) session.get<SessionState>(STATE)
 
 #define PATTERN "([a-zA-Z]+) (/[0-9a-zA-Z\\-_,.;:'\"\\[\\]\\(\\)+=!@#$%^&*<>/?~`{}|]*) (HTTP/\\d\\.\\d)(\r|)$"
@@ -69,16 +69,16 @@ public:
         session.put<SessionState>(STATE, state);
     }
 
-    void messageReceived(Nwg::Session &session, Nwg::Object &obj)
+    void messageReceived(Nwg::Session &session, Nwg::MessageBuffer &obj)
     {
-        Nwg::ByteBuffer &msg = GETMSG(obj);
+        Nwg::MessageBuffer &msg = GETMSG(obj);
         SessionState &state  = GETSTATE(session);
 
         if (session.stillReading) {
             session.close();
         }
 
-        std::shared_ptr<Nwg::ByteBuffer> out(new Nwg::ByteBuffer(BUFFSIZE));
+        std::shared_ptr<Nwg::MessageBuffer> out(new Nwg::MessageBuffer(BUFFSIZE));
 
         std::string h1 = msg.sreadUntil('\n');
 
@@ -214,16 +214,16 @@ public:
         }
     }
 
-    void messageSent(Nwg::Session &session, Nwg::Object &obj)
+    void messageSent(Nwg::Session &session, Nwg::MessageBuffer &obj)
     {
-        Nwg::ByteBuffer &msg = GETMSG(obj);
+        Nwg::MessageBuffer &msg = GETMSG(obj);
         SessionState &state  = GETSTATE(session);
 
         if (state.readAndWriteFile && state.nwritten < state.length)
         {
             /* continue reading file and sending it chunk by chunk @READBUFFSIZE */
 
-            std::shared_ptr<Nwg::ByteBuffer> out(new Nwg::ByteBuffer(BUFFSIZE));
+            std::shared_ptr<Nwg::MessageBuffer> out(new Nwg::MessageBuffer(BUFFSIZE));
 
             std::ifstream *is = state.is;
             char *buff = new char[READBUFFSIZE];

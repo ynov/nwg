@@ -1,4 +1,4 @@
-#include "nwg_bytebuffer.h"
+#include "nwg_messagebuffer.h"
 
 #include <cstring>
 
@@ -7,87 +7,87 @@
 namespace Nwg
 {
 
-ByteBuffer::ByteBuffer()
+MessageBuffer::MessageBuffer()
     : _position(0), _limit(0) {}
 
-ByteBuffer::ByteBuffer(int size)
+MessageBuffer::MessageBuffer(int size)
     : _position(0), _limit(0)
 {
     _bs.reserve(size);
 }
 
-ByteBuffer::~ByteBuffer() {}
-int ByteBuffer::ssize() { return _limit; }
+MessageBuffer::~MessageBuffer() {}
+int MessageBuffer::ssize() { return _limit; }
 
-void ByteBuffer::forward(int n) { _position += n; }
-void ByteBuffer::rewind(int n) { _position -= n; }
-void ByteBuffer::jump(int n) { _position = n; }
-void ByteBuffer::reset() { _bs.clear(); _limit = 0; _position = 0; }
-void ByteBuffer::flip() { _limit = _position; _position = 0; }
-int ByteBuffer::remaining() { return _limit - _position; }
-size_t ByteBuffer::position() { return _position; }
-size_t ByteBuffer::limit() { return _limit; }
+void MessageBuffer::forward(int n) { _position += n; }
+void MessageBuffer::rewind(int n) { _position -= n; }
+void MessageBuffer::jump(int n) { _position = n; }
+void MessageBuffer::reset() { _bs.clear(); _limit = 0; _position = 0; }
+void MessageBuffer::flip() { _limit = _position; _position = 0; }
+int MessageBuffer::remaining() { return _limit - _position; }
+size_t MessageBuffer::position() { return _position; }
+size_t MessageBuffer::limit() { return _limit; }
 
-void ByteBuffer::put(byte b)
+void MessageBuffer::put(byte b)
 {
     _bs.insert(_bs.begin() + _position, b);
     _position++;
 }
 
-void ByteBuffer::put(const char *b, int size)
+void MessageBuffer::put(const char *b, int size)
 {
     _bs.insert(_bs.begin() + _position, b, b + size);
     _position += size;
 }
 
-void ByteBuffer::put(const byte *b, int size)
+void MessageBuffer::put(const byte *b, int size)
 {
     _bs.insert(_bs.begin() + _position, b, b + size);
     _position += size;
 }
 
-void ByteBuffer::put(const std::vector<byte> &bs)
+void MessageBuffer::put(const std::vector<byte> &bs)
 {
     _bs.insert(_bs.begin() + _position, bs.begin(), bs.end());
     _position += bs.size();
 }
 
-void ByteBuffer::put(const std::string &s)
+void MessageBuffer::put(const std::string &s)
 {
     _bs.insert(_bs.begin() + _position, s.begin(), s.end());
     _position += s.length();
 }
 
-void ByteBuffer::put(int i)
+void MessageBuffer::put(int i)
 {
     _bs.insert(_bs.begin() + _position, (byte *) &i, ((byte *) &i) + sizeof(int));
     _position += sizeof(int);
 }
 
-void ByteBuffer::put(float f)
+void MessageBuffer::put(float f)
 {
     _bs.insert(_bs.begin() + _position, (byte *) &f, ((byte *) &f) + sizeof(float));
     _position += sizeof(float);
 }
 
-void ByteBuffer::put(double d)
+void MessageBuffer::put(double d)
 {
     _bs.insert(_bs.begin() + _position, (byte *) &d, ((byte *) &d) + sizeof(double));
     _position += sizeof(double);
 }
 
-byte ByteBuffer::read()
+byte MessageBuffer::read()
 {
     return _bs[_position++];
 }
 
-void ByteBuffer::read(byte *dest, int size)
+void MessageBuffer::read(byte *dest, int size)
 {
     memcpy(dest, _bs.data() + _position, size);
     _position += size;
 }
 
-std::vector<byte> ByteBuffer::read(int size)
+std::vector<byte> MessageBuffer::read(int size)
 {
     std::vector<byte> bs(_bs.begin() + _position, _bs.begin() + _position + size);
     _position += size;
@@ -95,13 +95,13 @@ std::vector<byte> ByteBuffer::read(int size)
     return bs;
 }
 
-void ByteBuffer::read(std::vector<byte> &bs, int size)
+void MessageBuffer::read(std::vector<byte> &bs, int size)
 {
     bs.insert(bs.begin(), _bs.begin() + _position, _bs.begin() + _position + size);
     _position += size;
 }
 
-void ByteBuffer::readUntil(std::vector<byte> &bs, byte mark)
+void MessageBuffer::readUntil(std::vector<byte> &bs, byte mark)
 {
     bs.reserve(RESERVE_SIZE);
 
@@ -112,7 +112,7 @@ void ByteBuffer::readUntil(std::vector<byte> &bs, byte mark)
     }
 }
 
-std::vector<byte> ByteBuffer::readUntil(byte mark)
+std::vector<byte> MessageBuffer::readUntil(byte mark)
 {
     std::vector<byte> bs;
     readUntil(bs, mark);
@@ -120,7 +120,7 @@ std::vector<byte> ByteBuffer::readUntil(byte mark)
     return bs;
 }
 
-std::string ByteBuffer::sread(int length)
+std::string MessageBuffer::sread(int length)
 {
     std::string s(_bs.begin() + _position, _bs.begin() + _position + length);
     _position += length;
@@ -128,7 +128,7 @@ std::string ByteBuffer::sread(int length)
     return s;
 }
 
-std::string ByteBuffer::sreadUntil(byte mark)
+std::string MessageBuffer::sreadUntil(byte mark)
 {
     std::string s;
     s.reserve(RESERVE_SIZE);
@@ -142,7 +142,7 @@ std::string ByteBuffer::sreadUntil(byte mark)
     return s;
 }
 
-int ByteBuffer::readInt()
+int MessageBuffer::readInt()
 {
     int i =  *((int *) &(_bs[_position]));
     _position += sizeof(int);
@@ -150,7 +150,7 @@ int ByteBuffer::readInt()
     return i;
 }
 
-float ByteBuffer::readFloat()
+float MessageBuffer::readFloat()
 {
     float f =  *((float *) &(_bs[_position]));
     _position += sizeof(float);
@@ -158,7 +158,7 @@ float ByteBuffer::readFloat()
     return f;
 }
 
-double ByteBuffer::readDouble()
+double MessageBuffer::readDouble()
 {
     double d =  *((double *) &(_bs[_position]));
     _position += sizeof(double);
@@ -166,12 +166,12 @@ double ByteBuffer::readDouble()
     return d;
 }
 
-byte &ByteBuffer::operator[](int i)
+byte &MessageBuffer::operator[](int i)
 {
     return _bs[i];
 }
 
-std::vector<byte> &ByteBuffer::bsRef()
+std::vector<byte> &MessageBuffer::bsRef()
 {
     return _bs;
 }

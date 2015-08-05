@@ -1,5 +1,7 @@
 #include "nwg_basicprotocolcodec.h"
-#include "nwg_bytebuffer.h"
+
+#include <memory>
+#include "nwg_messagebuffer.h"
 
 namespace Nwg
 {
@@ -12,20 +14,22 @@ BasicProtocolCodec::~BasicProtocolCodec()
 {
 }
 
-void BasicProtocolCodec::transformUp(ByteBuffer *in, ObjectContainer *out) const
+void BasicProtocolCodec::transformUp(MessageBuffer *in, MessageBuffer **out) const
 {
-    std::unique_ptr<ByteBuffer> encoded(new ByteBuffer(in->ssize()));
+    // TODO: Prevent leak!
+    MessageBuffer *encoded = new MessageBuffer(in->ssize());
     *encoded = *in;
-    out->setObject(std::move(encoded));
+
+    *out = encoded;
 }
 
-void BasicProtocolCodec::transformDown(Object *in, ByteBuffer *out) const
+void BasicProtocolCodec::transformDown(MessageBuffer *in, MessageBuffer *out) const
 {
     if (in == nullptr) {
         return;
     }
 
-    ByteBuffer *decoded = dynamic_cast<ByteBuffer *>(in);
+    MessageBuffer *decoded = dynamic_cast<MessageBuffer *>(in);
 
     out->reset();
     out->put(decoded->read(decoded->remaining()));

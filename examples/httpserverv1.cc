@@ -15,7 +15,7 @@
 #define _printf(...) fprintf (stdout, __VA_ARGS__)
 #endif
 
-#define GETMSG(obj) dynamic_cast<Nwg::ByteBuffer &>(obj)
+#define GETMSG(obj) dynamic_cast<Nwg::MessageBuffer &>(obj)
 
 static int numReq = 0;
 
@@ -29,10 +29,10 @@ class HttpHandler : public Nwg::Handler
         _printf("==== SESSION OPENED #%d ====\n", reqNo);
     }
 
-    void messageReceived(Nwg::Session &session, Nwg::Object &obj)
+    void messageReceived(Nwg::Session &session, Nwg::MessageBuffer &obj)
     {
-        Nwg::ByteBuffer &msg = GETMSG(obj);
-        std::shared_ptr<Nwg::ByteBuffer> out(new Nwg::ByteBuffer(BUFFSIZE));
+        Nwg::MessageBuffer &msg = GETMSG(obj);
+        std::shared_ptr<Nwg::MessageBuffer> out(new Nwg::MessageBuffer(BUFFSIZE));
 
         _printf("==== REQUEST RECEIVED ====\n");
         _printf("%s\n", msg.sread(msg.remaining()).c_str());
@@ -59,9 +59,9 @@ class HttpHandler : public Nwg::Handler
         session.write(out);
     }
 
-    void messageSent(Nwg::Session &session, Nwg::Object &obj)
+    void messageSent(Nwg::Session &session, Nwg::MessageBuffer &obj)
     {
-        Nwg::ByteBuffer &msg = GETMSG(obj);
+        Nwg::MessageBuffer &msg = GETMSG(obj);
 
         _printf("==== RESPONSE SENT ====\n");
         _printf("%s\n", msg.sread(msg.remaining()).c_str());

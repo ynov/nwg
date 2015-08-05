@@ -18,7 +18,7 @@ endif
 all: lib/libnwg.a tests examples
 
 tests: lib/libnwg.a \
-	tests/test_nwg_bytebuffer \
+	tests/test_nwg_messagebuffer \
 	tests/test_nwg_acceptor
 
 examples: lib/libnwg.a \
@@ -28,9 +28,7 @@ examples: lib/libnwg.a \
 	examples/exm_httpserverv2
 
 lib/libnwg.a: \
-	nwg_objectcontainer.o \
-	nwg_object.o \
-	nwg_bytebuffer.o \
+	nwg_messagebuffer.o \
 	nwg_session.o \
 	nwg_protocolcodec.o \
 	nwg_basicprotocolcodec.o \
@@ -88,9 +86,9 @@ libboost: lib/libboost_regex.a lib/libboost_filesystem.a lib/libboost_system.a
 examples/exm_%: examples/%.cc lib/libnwg.a
 	$(CXX) -o examples/exm_$(notdir $(basename $<)) $< $(CXXFLAGS) $(LIBS) $(BOOSTLIBS)
 
-tests/test_nwg_bytebuffer: tests/nwg_bytebuffer_test.cc lib/libnwg.a
-	$(CXX) -o tests/test_nwg_bytebuffer \
-		tests/nwg_bytebuffer_test.cc $(CXXFLAGS) $(LIBS)
+tests/test_nwg_messagebuffer: tests/nwg_messagebuffer_test.cc lib/libnwg.a
+	$(CXX) -o tests/test_nwg_messagebuffer \
+		tests/nwg_messagebuffer_test.cc $(CXXFLAGS) $(LIBS)
 
 tests/test_nwg_acceptor: tests/nwg_acceptor_test.cc lib/libnwg.a
 	$(CXX) -o tests/test_nwg_acceptor \

@@ -1,22 +1,20 @@
-#ifndef NWG_BYTEBUFFER_H_
-#define NWG_BYTEBUFFER_H_
+#ifndef NWG_MESSAGEBUFFER_H_
+#define NWG_MESSAGEBUFFER_H_
 
 #include <vector>
 #include <string>
-
-#include "nwg_object.h"
 
 typedef unsigned char byte;
 
 namespace Nwg
 {
 
-class ByteBuffer : public Object
+class MessageBuffer
 {
 public:
-    ByteBuffer();
-    ByteBuffer(int size);
-    virtual ~ByteBuffer();
+    MessageBuffer();
+    MessageBuffer(int size);
+    virtual ~MessageBuffer();
     virtual int ssize();
 
     void forward(int n);

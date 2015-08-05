@@ -7,25 +7,25 @@
 
 class DummyHandler : public Nwg::Handler
 {
-    void messageReceived(Nwg::Session &session, Nwg::Object &message)
+    void messageReceived(Nwg::Session &session, Nwg::MessageBuffer &message)
     {
         printf("On messageReceived()!\n");
 
-        Nwg::ByteBuffer &b = dynamic_cast<Nwg::ByteBuffer &>(message);
+        Nwg::MessageBuffer &b = dynamic_cast<Nwg::MessageBuffer &>(message);
         printf("In Message: %s\n", b.sread(b.remaining()).c_str());
 
-        std::shared_ptr<Nwg::ByteBuffer> out(new Nwg::ByteBuffer(session.getBufferAllocationSize()));
+        std::shared_ptr<Nwg::MessageBuffer> out(new Nwg::MessageBuffer(session.getBufferAllocationSize()));
         out->put("Grumpy wizards make toxic brew for the evil queen and jack.");
         out->flip();
 
         session.write(out);
     }
 
-    void messageSent(Nwg::Session &session, Nwg::Object &message)
+    void messageSent(Nwg::Session &session, Nwg::MessageBuffer &message)
     {
         printf("On messageSent()!\n");
 
-        Nwg::ByteBuffer &b = dynamic_cast<Nwg::ByteBuffer &>(message);
+        Nwg::MessageBuffer &b = dynamic_cast<Nwg::MessageBuffer &>(message);
         printf("Out Message: %s\n", b.sread(b.remaining()).c_str());
     }
 };
@@ -39,19 +39,19 @@ public:
     {
         Nwg::Session session(BUFFSIZE, nullptr, 0, nullptr);
 
-        Nwg::ByteBuffer &in = session.getReadBuffer();
-        Nwg::ByteBuffer &out = session.getWriteBuffer();
+        Nwg::MessageBuffer &in = session.getReadBuffer();
+        Nwg::MessageBuffer &out = session.getWriteBuffer();
 
         in.put("The quick brown fox jumps over the lazy dog.");
         in.flip();
 
-        Nwg::ObjectContainer oc;
+        Nwg::MessageBuffer *outBuff;
 
-        getProtocolCodec().transformUp(&in, &oc);
-        getHandler().messageReceived(session, oc.getObject());
+        getProtocolCodec().transformUp(&in, &outBuff);
+        getHandler().messageReceived(session, *outBuff);
 
         getProtocolCodec().transformDown(&session.getWriteObject(), &out);
-        Nwg::ByteBuffer outCopy = out;
+        Nwg::MessageBuffer outCopy = out;
         printf(" >> %s\n", out.sread(out.remaining()).c_str());
         getHandler().messageSent(session, outCopy);
     }

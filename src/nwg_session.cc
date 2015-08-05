@@ -13,8 +13,8 @@ Session::Session(int bufferAllocationSize,
     : _bufferAllocationSize(bufferAllocationSize),
       _writeObject(nullptr),
       _lastWriteObject(nullptr),
-      _readBuffer(ByteBuffer(bufferAllocationSize)),
-      _writeBuffer(ByteBuffer(bufferAllocationSize)),
+      _readBuffer(MessageBuffer(bufferAllocationSize)),
+      _writeBuffer(MessageBuffer(bufferAllocationSize)),
       _fd(fd),
       _service(service)
 {
@@ -47,7 +47,7 @@ Session::~Session()
     }
 }
 
-void Session::write(const std::shared_ptr<Object> &obj)
+void Session::write(const std::shared_ptr<MessageBuffer> &obj)
 {
     _writeObject = obj;
 }
@@ -82,22 +82,22 @@ void Session::resetWrite()
     _writeBuffer.reset();
 }
 
-Object &Session::getWriteObject()
+MessageBuffer &Session::getWriteObject()
 {
     return *_writeObject;
 }
 
-Object &Session::getLastWriteObject()
+MessageBuffer &Session::getLastWriteObject()
 {
     return *_lastWriteObject;
 }
 
-ByteBuffer &Session::getReadBuffer()
+MessageBuffer &Session::getReadBuffer()
 {
     return _readBuffer;
 }
 
-ByteBuffer &Session::getWriteBuffer()
+MessageBuffer &Session::getWriteBuffer()
 {
     return _writeBuffer;
 }

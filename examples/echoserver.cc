@@ -13,7 +13,7 @@ class EchoHandler : public Nwg::Handler
 {
     void sessionOpened(Nwg::Session &session)
     {
-        std::shared_ptr<Nwg::ByteBuffer> out(new Nwg::ByteBuffer(BUFFSIZE));
+        std::shared_ptr<Nwg::MessageBuffer> out(new Nwg::MessageBuffer(BUFFSIZE));
 
         numClient++;
         lastId++;
@@ -53,10 +53,10 @@ class EchoHandler : public Nwg::Handler
         printf("num_client: %d\n", numClient);
     }
 
-    void messageReceived(Nwg::Session &session, Nwg::Object &obj)
+    void messageReceived(Nwg::Session &session, Nwg::MessageBuffer &obj)
     {
-        Nwg::ByteBuffer &msg = dynamic_cast<Nwg::ByteBuffer &>(obj);
-        std::shared_ptr<Nwg::ByteBuffer> out(new Nwg::ByteBuffer(BUFFSIZE));
+        Nwg::MessageBuffer &msg = dynamic_cast<Nwg::MessageBuffer &>(obj);
+        std::shared_ptr<Nwg::MessageBuffer> out(new Nwg::MessageBuffer(BUFFSIZE));
 
         int clientId = session.get<int>("client_id");
         int &msgReceived = session.get<int>("msg_received");
@@ -74,7 +74,7 @@ class EchoHandler : public Nwg::Handler
         msgReceived++;
     }
 
-    void messageSent(Nwg::Session &session, Nwg::Object &obj)
+    void messageSent(Nwg::Session &session, Nwg::MessageBuffer &obj)
     {
         if (numClient > MAX_CLIENT) {
             session.close();

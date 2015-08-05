@@ -1,4 +1,4 @@
-#include <nwg_bytebuffer.h>
+#include <nwg_messagebuffer.h>
 
 #include <cstdio>
 
@@ -6,14 +6,14 @@ int main(int argc, char **argv)
 {
     printf("-- BEGIN --\n\n");
 
-    Nwg::ByteBuffer b1(1024);
-    Nwg::ByteBuffer b2(1024);
-    Nwg::ByteBuffer b3(1024);
-    Nwg::ByteBuffer b4(1024);
-    Nwg::ByteBuffer b5(1024);
-    Nwg::ByteBuffer b6(1024);
+    Nwg::MessageBuffer b1(1024);
+    Nwg::MessageBuffer b2(1024);
+    Nwg::MessageBuffer b3(1024);
+    Nwg::MessageBuffer b4(1024);
+    Nwg::MessageBuffer b5(1024);
+    Nwg::MessageBuffer b6(1024);
 
-    Nwg::Object &obj = b3;
+    Nwg::MessageBuffer &obj = b3;
 
     b1.put("abc");
     b1.put("xyz");
@@ -41,7 +41,7 @@ int main(int argc, char **argv)
     printf("\n");
 
     do {
-        Nwg::ByteBuffer &bbuf = dynamic_cast<Nwg::ByteBuffer &>(obj);
+        Nwg::MessageBuffer &bbuf = dynamic_cast<Nwg::MessageBuffer &>(obj);
 
         byte bs[] = {
             0x01, 0x11,

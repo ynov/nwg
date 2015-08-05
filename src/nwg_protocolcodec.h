@@ -1,12 +1,10 @@
 #ifndef NWG_PROTOCOLCODEC_H_
 #define NWG_PROTOCOLCODEC_H_
 
-#include "nwg_objectcontainer.h"
-
 namespace Nwg
 {
 
-class ByteBuffer;
+class MessageBuffer;
 
 class ProtocolCodec
 {
@@ -14,8 +12,8 @@ public:
     ProtocolCodec();
     virtual ~ProtocolCodec();
 
-    virtual void transformUp(ByteBuffer *in, ObjectContainer *out) const = 0;
-    virtual void transformDown(Object *in, ByteBuffer *out) const = 0;
+    virtual void transformUp(MessageBuffer *in, MessageBuffer **out) const = 0;
+    virtual void transformDown(MessageBuffer *in, MessageBuffer *out) const = 0;
 };
 
 } /* namespace Nwg */

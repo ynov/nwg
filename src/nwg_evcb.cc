@@ -9,9 +9,7 @@
 
 #include "nwg_acceptor.h"
 #include "nwg_connector.h"
-#include "nwg_object.h"
-#include "nwg_objectcontainer.h"
-#include "nwg_bytebuffer.h"
+#include "nwg_messagebuffer.h"
 #include "nwg_protocolcodec.h"
 #include "nwg_handler.h"
 #include "nwg_session.h"
@@ -144,8 +142,8 @@ void EVCB::doRead(evutil_socket_t fd, short events, void *arg)
     Service &service             = session->getService();
     ProtocolCodec &protocolCodec = service.getProtocolCodec();
     Handler &handler             = service.getHandler();
-    ByteBuffer &readBuffer       = session->getReadBuffer();
-    ByteBuffer &writeBuffer      = session->getWriteBuffer();
+    MessageBuffer &readBuffer    = session->getReadBuffer();
+    MessageBuffer &writeBuffer   = session->getWriteBuffer();
     size_t readBuffSize          = service.getReadBuffSize();
 
     char *buff = new char[readBuffSize];
@@ -211,11 +209,14 @@ void EVCB::doRead(evutil_socket_t fd, short events, void *arg)
         }
     }
 
-    Nwg::ObjectContainer oc;
-    protocolCodec.transformUp(&session->getReadBuffer(), &oc);
+    Nwg::MessageBuffer *outBuff;
+    protocolCodec.transformUp(&session->getReadBuffer(), &outBuff);
 
     session->resetWrite();
-    handler.messageReceived(*session, oc.getObject());
+    handler.messageReceived(*session, *outBuff);
+
+    // TODO: Better way to do this!
+    delete outBuff;
 
     if (session->isClosed()) {
         event_del(session->readEvent);
@@ -250,7 +251,7 @@ void EVCB::doWrite(evutil_socket_t fd, short events, void *arg)
     Service &service             = session->getService();
     ProtocolCodec &protocolCodec = service.getProtocolCodec();
     Handler &handler             = service.getHandler();
-    ByteBuffer &writeBuffer      = session->getWriteBuffer();
+    MessageBuffer &writeBuffer   = session->getWriteBuffer();
 
     if (session->nWritten == 0) {
         protocolCodec.transformDown(&session->getWriteObject(), &writeBuffer);

@@ -16,13 +16,13 @@ class EchoClientHandler : public Nwg::Handler
         printf("Session opened!\n");
     }
 
-    void messageReceived(Nwg::Session &session, Nwg::Object &obj)
+    void messageReceived(Nwg::Session &session, Nwg::MessageBuffer &obj)
     {
-        Nwg::ByteBuffer &msg = dynamic_cast<Nwg::ByteBuffer &>(obj);
+        Nwg::MessageBuffer &msg = dynamic_cast<Nwg::MessageBuffer &>(obj);
 
         printf("Message: %s\n", msg.sreadUntil('\n').c_str());
 
-        std::shared_ptr<Nwg::ByteBuffer> out(new Nwg::ByteBuffer(BUFFSIZE));
+        std::shared_ptr<Nwg::MessageBuffer> out(new Nwg::MessageBuffer(BUFFSIZE));
 
         if (msgNo == 0) {
             msgNo++;
@@ -56,7 +56,7 @@ class EchoClientHandler : public Nwg::Handler
 
     }
 
-    void messageSent(Nwg::Session &session, Nwg::Object &obj)
+    void messageSent(Nwg::Session &session, Nwg::MessageBuffer &obj)
     {
 
     }

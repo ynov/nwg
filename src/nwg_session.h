@@ -6,8 +6,7 @@
 
 #include <event2/event.h>
 
-#include "nwg_object.h"
-#include "nwg_bytebuffer.h"
+#include "nwg_messagebuffer.h"
 
 namespace Nwg
 {
@@ -24,7 +23,7 @@ public:
             Service *service);
     virtual ~Session();
 
-    void write(const std::shared_ptr<Object> &obj);
+    void write(const std::shared_ptr<MessageBuffer> &obj);
     void close();
 
     int getBufferAllocationSize();
@@ -33,10 +32,10 @@ public:
     void resetWriteObject();
     void resetWrite();
 
-    Object &getWriteObject();
-    Object &getLastWriteObject();
-    ByteBuffer &getReadBuffer();
-    ByteBuffer &getWriteBuffer();
+    MessageBuffer &getWriteObject();
+    MessageBuffer &getLastWriteObject();
+    MessageBuffer &getReadBuffer();
+    MessageBuffer &getWriteBuffer();
     Service &getService();
 
     bool isClosed();
@@ -68,11 +67,11 @@ public:
 
 private:
     int _bufferAllocationSize;
-    std::shared_ptr<Object> _writeObject;
-    std::shared_ptr<Object> _lastWriteObject;
+    std::shared_ptr<MessageBuffer> _writeObject;
+    std::shared_ptr<MessageBuffer> _lastWriteObject;
 
-    ByteBuffer _readBuffer;
-    ByteBuffer _writeBuffer;
+    MessageBuffer _readBuffer;
+    MessageBuffer _writeBuffer;
 
     evutil_socket_t _fd = -1;
     Service *_service = nullptr;
