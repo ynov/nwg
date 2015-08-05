@@ -1,6 +1,7 @@
 #include <cstdio>
 #include <iostream>
 #include <fstream>
+#include <iomanip>
 
 #include <boost/regex.hpp>
 #include <boost/filesystem.hpp>
@@ -27,267 +28,369 @@ using boost::regex_replace;
 using boost::smatch;
 
 using namespace boost::filesystem;
-
-static int numReq = 0;
 static path workingPath;
 
-struct SessionState {
-    int reqNo             = 0;
-    size_t nwritten       = 0;
-    size_t length         = 0;
-    std::ifstream *is     = nullptr;
-    bool readAndWriteFile = false;
-};
+static int numReq = 0;
+static int initialDataPort = 37100;
 
-#define STATE "STATE"
-#define GETMSG(obj) dynamic_cast<Nwg::MessageBuffer &>(obj)
-#define GETSTATE(session) session.get<SessionState>(STATE)
+const std::string R_WELCOME_MSG      = "220 Nwg FTP Server Example\r\n";
+const std::string R_SPECIFY_PASSWORD = "331 Please specify password.\r\n";
+const std::string R_LOGIN_SUCCESSFUL = "230 Login successful.\r\n";
+const std::string R_ENTER_PASV_      = "227 Entering Passive Mode ";
+const std::string R_SHOW_PWD_        = "257 ";
+const std::string R_OPENCONN_LIST    = "150 Here comes the directory listing.\r\n";
+const std::string R_OPENCONN_RETR    = "150 Opening connection.\r\n";
+const std::string R_TRF_COMPLETE     = "226 Transfer complete.\r\n";
+const std::string R_DIR_CHANGED      = "250 Directory successfully changed.\r\n";
+const std::string R_SYST             = "215 UNIX Type: L8\r\n";
+const std::string R_MUST_LOGIN       = "530 You must login.\r\n";
+const std::string R_UNKWN_COMMAND    = "550 Unknown command.\r\n";
+const std::string R_GOODBYE          = "221 Goodbye.\r\n";
+const std::string R_USE_PASV_FIRST   = "425 Use PASV first.\r\n";
+const std::string R_TYPE             = "200 Switching to Binary mode.\r\n";
 
-#define PATTERN "([a-zA-Z]+) (/[0-9a-zA-Z\\-_,.;:'\"\\[\\]\\(\\)+=!@#$%^&*<>/?~`{}|]*) (HTTP/\\d\\.\\d)(\r|)$"
+#define CMD_USER "USER"
+#define CMD_PASS "PASS"
+#define CMD_SYST "SYST"
+#define CMD_PASV "PASV"
+#define CMD_LIST "LIST"
+#define CMD_NLST "NLST"
+#define CMD_CWD  "CWD"
+#define CMD_PWD  "PWD"
+#define CMD_RETR "RETR"
+#define CMD_QUIT "QUIT"
+#define CMD_TYPE "TYPE"
 
-class FtpHandler : public Nwg::Handler
+std::vector<std::string> tokenize(const std::string &str)
 {
-private:
-    static boost::regex pattern;
+    std::string buf;
+    std::stringstream ss(str);
+    std::vector<std::string> tokens;
 
-    std::string decodeUrl(const std::string &url)
-    {
-        std::string nurl = url;
-
-        static regex reSpace("%20");
-        nurl = regex_replace(nurl, reSpace, " ");
-
-        return nurl;
+    while (ss >> buf) {
+        tokens.push_back(buf);
     }
 
+    return tokens;
+}
+
+std::string port12(int port)
+{
+    std::stringstream ss;
+    ss << port / 256 << "," << port % 256;
+
+    return ss.str();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Ftp Data Handler
+////////////////////////////////////////////////////////////////////////////////////////////////////
+class FtpDataHandler : public Nwg::Handler
+{
+    struct State;
+
+public:
+    void setState(State *state) { _state = state; }
+    void setCommand(const std::string &command) { _command = command; }
+    void setParameter(const std::string &parameter) { _parameter = parameter; }
+    void setCurrentPath(const path &currentPath) { _currentPath = currentPath; }
+
+    void sessionOpened(Nwg::Session &session)
+    {
+        std::shared_ptr<Nwg::MessageBuffer> out(new Nwg::MessageBuffer(BUFFSIZE));
+        out->put("");
+        out->flip();
+        session.write(out);
+    }
+
+    void messageReceived(Nwg::Session &session, Nwg::MessageBuffer &msg)
+    {
+    }
+
+    void messageSent(Nwg::Session &session, Nwg::MessageBuffer &msg)
+    {
+        std::shared_ptr<Nwg::MessageBuffer> out(new Nwg::MessageBuffer(BUFFSIZE));
+
+        if (closeNow) {
+            session.close();
+            _command = "";
+            closeNow = false;
+        }
+
+        if (_command == "") {
+            out->put("");
+        }
+        else {
+
+            // LIST
+            if (_command == CMD_LIST) {
+                std::stringstream ss;
+                path p = current_path() / _currentPath;
+
+                if (is_directory(p)) {
+                    typedef std::vector<path> vec;
+                    vec v;
+
+                    std::copy(directory_iterator(p), directory_iterator(), std::back_inserter<vec>(v));
+                    sort(v.begin(), v.end());
+
+                    for (vec::const_iterator it(v.begin()), it_end(v.end()); it != it_end; ++it) {
+                        if (is_directory(*it)) {
+                            ss << "drwxrwxr-x    2 1000     1000 " << std::setw(10) << 4096 << " Aug 01 18:00 " << it->filename().string() << "\r\n";
+                        } else {
+                            ss << "-rw-rw-r--    1 1000     1000 " << std::setw(10) << file_size(_currentPath / it->filename()) << " Aug 01 18:00 " << it->filename().string() << "\r\n";
+                        }
+                    }
+                }
+                out->put(ss.str());
+                closeNow = true;
+            }
+
+            // RETR
+            else if (_command == CMD_RETR) {
+                std::ifstream is((_currentPath.string() != "" ? _currentPath.string() + "/" : "") + _parameter, std::ios::binary);
+
+                std::string content;
+
+                is.seekg(0, std::ios::end);
+                content.reserve(is.tellg());
+                is.seekg(0, std::ios::beg);
+
+                content.assign((std::istreambuf_iterator<char>(is)),
+                                std::istreambuf_iterator<char>());
+
+                out->put(content);
+                closeNow = true;
+            }
+
+            else {
+                out->put("Unknown command.\r\n");
+                closeNow = true;
+            }
+        }
+
+        out->flip();
+        session.write(out);
+    }
+
+    void sessionClosed(Nwg::Session &session)
+    {
+    }
+
+private:
+    State *_state;
+    path _currentPath;
+    std::string _command = "";
+    std::string _parameter = "";
+    bool closeNow = false;
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Ftp Command Handler
+////////////////////////////////////////////////////////////////////////////////////////////////////
+struct State
+{
+    int reqNo = -1;
+    bool loggedIn = false;
+    bool quit = false;
+
+    bool pasvMode = false;
+    int pasvPort = -1;
+
+    path absolutePath;
+    path relativePath;
+
+    std::string lastCommand = "";
+    std::string lastParameter = "";
+
+    Nwg::Acceptor *dataHandlerAcceptor = NULL;
+    std::shared_ptr<FtpDataHandler> dataHandler;
+};
+
+class FtpCommandHandler : public Nwg::Handler
+{
 public:
     void sessionOpened(Nwg::Session &session)
     {
-        std::shared_ptr<SessionState> state(new SessionState());
-        state->reqNo = ++numReq;
-
-        session.put<SessionState>(STATE, state);
-    }
-
-    void messageReceived(Nwg::Session &session, Nwg::MessageBuffer &obj)
-    {
-        Nwg::MessageBuffer &msg = GETMSG(obj);
-        SessionState &state  = GETSTATE(session);
-
-        if (session.stillReading) {
-            session.close();
-        }
-
         std::shared_ptr<Nwg::MessageBuffer> out(new Nwg::MessageBuffer(BUFFSIZE));
 
-        std::string h1 = msg.sreadUntil('\n');
+        std::shared_ptr<State> state(new State());
+        state->reqNo = ++numReq;
+        state->absolutePath = workingPath;
+        state->relativePath = "";
+        session.put<State>("state", state);
 
-        _printf("==== REQUEST RECEIVED %d ====\n", state.reqNo);
-        _printf("%s\n", h1.c_str());
+        printf("Session opened #%d\n", state->reqNo);
 
-        smatch what;
-        std::string url = "";
-        bool requestOk = false;
+        out->put(R_WELCOME_MSG);
+        out->flip();
 
-        if (regex_match(h1, what, pattern)) {
-            _printf("Method: %s\n", what[1].str().c_str());
-            _printf("URL: %s\n", what[2].str().c_str());
-            _printf("HTTP Version: %s\n", what[3].str().c_str());
+        session.write(out);
+    }
 
-            url = decodeUrl(what[2].str());
-            requestOk = true;
-        } else {
-            _printf("MALFORMED REQUEST.\n");
-        }
+    void messageReceived(Nwg::Session &session, Nwg::MessageBuffer &msg)
+    {
+        std::shared_ptr<Nwg::MessageBuffer> out(new Nwg::MessageBuffer(BUFFSIZE));
+        State &state = session.get<State>("state");
 
-        _printf("==== ==== ====\n");
+        std::vector<std::string> tokens = tokenize(msg.sreadUntil('\n'));
+        std::string &command = tokens[0];
 
-        path urlPath = workingPath;
-        urlPath += url;
+        printf("Command: %s\n", command.c_str());
 
-        /* request is okay and it is a directory */
-        if (requestOk && is_directory(urlPath) && ((int) url.find("..") == -1))
-        {
-            std::string sout;
-            sout.reserve(BUFFSIZE);
-
-            path p = urlPath;
-            if (is_directory(p)) {
-                typedef std::vector<path> vec;
-                vec v;
-
-                std::copy(directory_iterator(p), directory_iterator(), std::back_inserter<vec>(v));
-                sort(v.begin(), v.end());
-
-                for (vec::const_iterator it(v.begin()), it_end(v.end()); it != it_end; ++it) {
-                    if (is_directory(*it)) {
-                        sout += "  <li><a href=\"" + it->filename().string() + "/\">" + it->filename().string() + "/</li>\n";
-                    } else {
-                        sout += "  <li><a href=\"" + it->filename().string() + "\">" + it->filename().string() + "</li>\n";
-                    }
+        // Not logged in
+        if (!state.loggedIn && command != CMD_QUIT) {
+            if (state.lastCommand == CMD_USER) {
+                if (command == CMD_PASS) {
+                    state.loggedIn = true;
+                    out->put(R_LOGIN_SUCCESSFUL);
+                } else {
+                    out->put(R_UNKWN_COMMAND);
+                }
+            } else {
+                if (command == CMD_USER) {
+                    state.lastCommand = CMD_USER;
+                    out->put(R_SPECIFY_PASSWORD);
+                } else {
+                    out->put(R_MUST_LOGIN);
                 }
             }
 
-            out->put("HTTP/1.1 200 OK\r\n");
-            out->put("Content-Type: text/html\r\n");
-            out->put("Connection: close\r\n");
-            out->put("\r\n");
-
-            out->put("<h1>Listing of " + urlPath.string() + "</h1>\n");
-            out->put("<ul>\n");
-            out->put(sout);
-            out->put("</ul>\n");
-
-            out->flip();
-
-            session.write(out);
-            return;
+            goto end;
         }
 
-        /* request is okay and it is likely a regular file */
-        else if (requestOk)
-        {
-            url = url.substr(1);
-            path p(url);
-
-            if (is_regular_file(p))
-            {
-                std::ifstream *is = new std::ifstream(p.string(), std::ios::binary);
-                is->seekg(0, is->end);
-                int length = is->tellg();
-                is->seekg(0, is->beg);
-
-                state.readAndWriteFile = true;
-                state.length = length;
-                state.nwritten = 0;
-                state.is = is;
-
-                _printf("==== DATA TO BE WRITTEN: %d ====\n", length);
-
-                out->put("HTTP/1.1 200 OK\r\n");
-                out->put("Content-Type: text/plain\r\n");
-                out->put("Connection: close\r\n");
-                out->put("Content-Length: " + std::to_string(length) + "\r\n");
-                out->put("\r\n");
-
-                out->flip();
-
-                /* send the header first */
-                /* will continue reading the file and sending it at messageSent() */
-
-                session.write(out);
-                return;
+        // PASV
+        if (command == CMD_PASV) {
+            state.pasvMode = true;
+            if (state.pasvPort == -1) {
+                state.pasvPort = initialDataPort++;
             }
 
-            /* neither regular file nor directory, let's assume it is not found */
-            else
-            {
-                out->put("HTTP/1.1 404 NOT FOUND\r\n");
-                out->put("Content-Type: text/html\r\n");
-                out->put("Connection: close\r\n");
-                out->put("\r\n");
+            std::stringstream ss;
+            ss << R_ENTER_PASV_ << "(127,0,0,1," << port12(state.pasvPort) << ")\r\n";
+            out->put(ss.str());
 
-                out->put("<h1>404 NOT FOUND</h1>\n");
-                out->put("<pre>" + url + "</pre>\n");
+            if (state.dataHandlerAcceptor == NULL) {
+                state.dataHandler = std::make_shared<FtpDataHandler>();
 
-                out->flip();
-
-                session.write(out);
-                return;
+                state.dataHandlerAcceptor = new Nwg::Acceptor(session.getService().getEventLoop(), state.pasvPort);
+                state.dataHandlerAcceptor->setBuffSize(BUFFSIZE);
+                state.dataHandlerAcceptor->setHandler(state.dataHandler);
+                state.dataHandlerAcceptor->listen();
             }
         }
 
-        /* request is NOT okay */
-        else
-        {
-            out->put("HTTP/1.1 400 BAD REQUEST\r\n");
-            out->put("Content-Type: text/html\r\n");
-            out->put("Connection: close\r\n");
-            out->put("\r\n");
-
-            out->put("<h1>400 BAD REQUEST</h1>\n");
-
-            out->flip();
-
-            session.write(out);
-            return;
+        // TYPE
+        else if (command == CMD_TYPE) {
+            out->put(R_TYPE);
         }
+
+        // SYST
+        else if (command == CMD_SYST) {
+            out->put(R_SYST);
+        }
+
+        // CWD
+        else if (command == CMD_CWD) {
+            std::string npath = tokens[1];
+            if (npath == ".." || npath == "../") {
+                state.relativePath.remove_leaf();
+            } else {
+                state.relativePath /= path(npath);
+            }
+            out->put(R_DIR_CHANGED);
+        }
+
+        // PWD
+        else if (command == CMD_PWD) {
+            std::stringstream ss;
+            ss << R_SHOW_PWD_ << "\"/" << state.relativePath.string() << "\"\r\n";
+            out->put(ss.str());
+        }
+
+        // LIST
+        else if (command == CMD_LIST) {
+            if (!state.pasvMode) {
+                out->put(R_USE_PASV_FIRST);
+            } else {
+                state.dataHandler->setCommand(CMD_LIST);
+                state.dataHandler->setCurrentPath(state.relativePath);
+                state.lastCommand = CMD_LIST;
+
+                out->put(R_OPENCONN_LIST);
+                out->put(R_TRF_COMPLETE);
+                state.pasvMode = false;
+            }
+        }
+
+        // RETR
+        else if (command == CMD_RETR) {
+            if (!state.pasvMode) {
+                out->put(R_USE_PASV_FIRST);
+            } else {
+                state.dataHandler->setCommand(CMD_RETR);
+                state.dataHandler->setParameter(tokens[1]);
+                state.lastCommand = CMD_RETR;
+
+                out->put(R_OPENCONN_RETR);
+                out->put(R_TRF_COMPLETE);
+                state.pasvMode = false;
+            }
+        }
+
+        // QUIT
+        else if (command == CMD_QUIT) {
+            out->put(R_GOODBYE);
+            state.quit = true;
+        }
+
+        // Unknown Command
+        else {
+            printf("GOT YA! %s\n", command.c_str());
+            out->put(R_UNKWN_COMMAND);
+        }
+
+end:
+        out->flip();
+        session.write(out);
     }
 
-    void messageSent(Nwg::Session &session, Nwg::MessageBuffer &obj)
+    void messageSent(Nwg::Session &session, Nwg::MessageBuffer &msg)
     {
-        Nwg::MessageBuffer &msg = GETMSG(obj);
-        SessionState &state  = GETSTATE(session);
+        State &state = session.get<State>("state");
 
-        if (state.readAndWriteFile && state.nwritten < state.length)
-        {
-            /* continue reading file and sending it chunk by chunk @READBUFFSIZE */
-
-            std::shared_ptr<Nwg::MessageBuffer> out(new Nwg::MessageBuffer(BUFFSIZE));
-
-            std::ifstream *is = state.is;
-            char *buff = new char[READBUFFSIZE];
-
-            is->read(buff, READBUFFSIZE);
-            out->put(buff, is->gcount());
-            out->flip();
-
-            delete [] buff;
-
-            state.nwritten += is->gcount();
-            session.write(out);
-
-            if (state.nwritten == state.length) {
-                state.is->close();
-                delete state.is;
-                state.is = nullptr;
-
-                state.readAndWriteFile = false;
-                state.length = 0;
-                state.nwritten = 0;
-
-                _printf("==== STREAM CLOSED ====\n");
-            }
-        }
-
-        /* there is nothing left to be written */
-        else
-        {
+        if (state.quit) {
             session.close();
-
-            _printf("==== DATA IS COMPLETELY SENT ====\n");
+            delete state.dataHandlerAcceptor;
         }
     }
 
     void sessionClosed(Nwg::Session &session)
     {
-        SessionState &state = GETSTATE(session);
+        State &state = session.get<State>("state");
 
-        if (state.readAndWriteFile) {
-            state.is->close();
-            delete state.is;
-            state.is = nullptr;
-
-            _printf("==== STREAM CLOSED ====\n");
-            _printf("==== DATA IS NOT COMPLETELY SENT ====\n");
-        }
+        printf("Session closed #%d\n", state.reqNo);
     }
 };
 
-boost::regex FtpHandler::pattern = boost::regex(PATTERN);
-
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Main
+////////////////////////////////////////////////////////////////////////////////////////////////////
 void run(int port)
 {
     Nwg::EventLoop eventLoop;
+
     Nwg::Acceptor acceptor(&eventLoop, port);
 
     acceptor.setBuffSize(BUFFSIZE);
     acceptor.setReadBuffSize(READBUFFSIZE);
     acceptor.setProtocolCodec(std::make_shared<Nwg::BasicProtocolCodec>());
-    acceptor.setHandler(std::make_shared<FtpHandler>());
+    acceptor.setHandler(std::make_shared<FtpCommandHandler>());
 
     printf("Listening on port %d\n", acceptor.getPort());
-    printf("Open http://127.0.0.1:%d/\n", acceptor.getPort());
     acceptor.listen();
 
     eventLoop.dispatch();
